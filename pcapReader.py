@@ -7,7 +7,6 @@ I have stolen this code e teapod github.
 """
 # rcap_path = 'C:\\Users\\isakf\\Downloads\\OS1-128_Rev-06_fw23_Urban-Drive_Low-Bandwidth\\OS1-128_Rev-06_fw23_Urban-Drive_Low-Bandwidth.pcap'
 # metadata_path = 'C:\\Users\\isakf\\Downloads\\OS1-128_Rev-06_fw23_Urban-Drive_Low-Bandwidth\\OS1-128_Rev-06_fw23_Urban-Drive_Low-Bandwidth.json'
-
 class PcapReader:
 
     def __init__(self, pcap_path, meta_data_path=None, skip_frames=0):
