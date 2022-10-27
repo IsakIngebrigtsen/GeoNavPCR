@@ -7,7 +7,8 @@ import ouster.pcap as pcap
 import ouster.client as client
 
 from contextlib import closing
-from more_itertools import nth
+from more_itertools import nth, islice_extended
+from itertools import islice
 
 # Configure PCAP and JSON file paths
 pathBase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\data\\OS-1-128_992035000186_1024x10"
@@ -39,5 +40,6 @@ ax.set_zlim3d([-r/2, r/2])
 plt.axis('off')
 z_col = np.minimum(np.absolute(z), 5)
 ax.scatter(x, y, z, c=z_col, s=0.2)
-
 plt.show()
+
+
