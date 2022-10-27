@@ -1,4 +1,3 @@
-from ICP.nicp import NicpMatcher
 import ouster.pcap as pcap
 import ouster.client as client
 from contextlib import closing
@@ -91,6 +90,33 @@ def remove_vehicle(frame, cloud = None):
     vl = 2.2
     return cloud[((frame[:, 0] > 0.2) | (frame[:, 0] < -vl)) | ((frame[:, 1] > vw) | (frame[:, 1] < -vw)) | ((frame[:, 2] > 0.3) | (frame[:, 2] < -2))]
 
+def draw_icp(source,target,trans_init):
+
+    threshold = 1
+    accumulatedTime = 0
+
+
+    print("Apply point-to-plane ICP")
+    startTime = time.perf_counter()
+    reg_p2l = o3d.pipelines.registration.registration_icp(
+        source, target, threshold, trans_init,
+        o3d.pipelines.registration.TransformationEstimationPointToPlane(),
+        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=100))
+    accumulatedTime += time.perf_counter() - startTime
+    print(f"Time usage: {time.perf_counter() - startTime:0.4f} seconds.")
+    print(reg_p2l)
+    print("Transformation is:")
+    print(reg_p2l.transformation)
+    print("Transformed center:")
+    print(o3d.geometry.PointCloud(o3d.utility.Vector3dVector(np.asarray([[0.0, 0.0, 0.0]]))).transform(
+        reg_p2l.transformation).get_center())
+    print("")
+
+    transformation = reg_p2l.transformation
+    draw_registration_result(source, target, trans_init)
+    return transformation
+
+
 if __name__ == "__main__":
 
     pathBase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\data\\OS-1-128_992035000186_1024x10"
@@ -100,8 +126,8 @@ if __name__ == "__main__":
     accumulatedTime = 0.0
     startTime = time.perf_counter()
 
-    source = get_frame(pcap_file, meta, 1)
-    target = get_frame(pcap_file, meta, 20)
+    source = get_frame(pcap_file, meta, 70)
+    target = get_frame(pcap_file, meta, 100)
 
     source = source.reshape((-1, 3))
     target = target.reshape((-1, 3))
@@ -118,7 +144,6 @@ if __name__ == "__main__":
 
     accumulatedTime += time.perf_counter() - startTime
 
-
     print(f"Time usage: {time.perf_counter() - startTime:0.4f} seconds.")
     print("")
 
@@ -129,26 +154,13 @@ if __name__ == "__main__":
 
     threshold = 1
     trans_init = np.identity(4)
-
     draw_registration_result(downsampled_source, downsampled_target, trans_init)
 
-    print("Apply point-to-plane ICP")
-    startTime = time.perf_counter()
-    reg_p2l = o3d.pipelines.registration.registration_icp(
-        downsampled_source, downsampled_target, threshold, trans_init,
-        o3d.pipelines.registration.TransformationEstimationPointToPlane(),
-        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=100))
-    accumulatedTime += time.perf_counter() - startTime
-    print(f"Time usage: {time.perf_counter() - startTime:0.4f} seconds.")
-    print(reg_p2l)
-    print("Transformation is:")
-    print(reg_p2l.transformation)
-    print("Transformed center:")
-    print(o3d.geometry.PointCloud(o3d.utility.Vector3dVector(np.asarray([[0.0,0.0,0.0]]))).transform(reg_p2l.transformation).get_center())
-    print("")
-
-    trans_init = reg_p2l.transformation
-
+    trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)
+    trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)
+    trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)
+    trans_init = draw_icp(source, target, trans_init)
+    """
     draw_registration_result(downsampled_source, downsampled_target, trans_init)
 
     print("Apply point-to-plane ICP")
@@ -168,3 +180,5 @@ if __name__ == "__main__":
     draw_registration_result(source, target, reg_p2l.transformation)
 
     print(f"Accumulated time: {accumulatedTime:0.4f} seconds.")
+
+"""
