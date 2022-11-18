@@ -126,8 +126,13 @@ if __name__ == "__main__":
     accumulatedTime = 0.0
     startTime = time.perf_counter()
 
-    source = get_frame(pcap_file, meta, 70)
+    source = get_frame(pcap_file, meta, 90)
+    source_1 = get_frame(pcap_file,meta,91)
+
     target = get_frame(pcap_file, meta, 100)
+
+
+
 
     source = source.reshape((-1, 3))
     target = target.reshape((-1, 3))
@@ -146,6 +151,7 @@ if __name__ == "__main__":
 
     print(f"Time usage: {time.perf_counter() - startTime:0.4f} seconds.")
     print("")
+
 
     downsampled_source = source.voxel_down_sample(voxel_size=0.5)
     downsampled_target = target.voxel_down_sample(voxel_size=0.5)
@@ -171,7 +177,7 @@ if __name__ == "__main__":
         o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=100))
     accumulatedTime += time.perf_counter() - startTime
     print(f"Time usage: {time.perf_counter() - startTime:0.4f} seconds.")
-    print(reg_p2l)
+    print(reg_p2l) 
     print("Transformation is:")
     print(reg_p2l.transformation)
     print("Transformed center:")
@@ -180,5 +186,4 @@ if __name__ == "__main__":
     draw_registration_result(source, target, reg_p2l.transformation)
 
     print(f"Accumulated time: {accumulatedTime:0.4f} seconds.")
-
-"""
+    """
