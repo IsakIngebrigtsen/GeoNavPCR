@@ -55,7 +55,6 @@ def get_frame(pcap_file,meta, frame):
     # Read the 50th LIDAR frame
     with closing(client.Scans(source)) as scans:
         scan = nth(scans, frame)
-
     # Create a function that translates coordinates to a plottable coordinate system
     xyzlut = client.XYZLut(source.metadata)
     xyz = xyzlut(scan)
@@ -127,16 +126,11 @@ if __name__ == "__main__":
     startTime = time.perf_counter()
 
     source = get_frame(pcap_file, meta, 90)
-    source_1 = get_frame(pcap_file,meta,91)
 
     target = get_frame(pcap_file, meta, 100)
 
-
-
-
     source = source.reshape((-1, 3))
     target = target.reshape((-1, 3))
-
     # Remove the vehicle
     source = remove_vehicle(source)
     target = remove_vehicle(target)
@@ -166,24 +160,3 @@ if __name__ == "__main__":
     trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)
     trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)
     trans_init = draw_icp(source, target, trans_init)
-    """
-    draw_registration_result(downsampled_source, downsampled_target, trans_init)
-
-    print("Apply point-to-plane ICP")
-    startTime = time.perf_counter()
-    reg_p2l = o3d.pipelines.registration.registration_icp(
-        source, target, threshold, trans_init,
-        o3d.pipelines.registration.TransformationEstimationPointToPlane(),
-        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=100))
-    accumulatedTime += time.perf_counter() - startTime
-    print(f"Time usage: {time.perf_counter() - startTime:0.4f} seconds.")
-    print(reg_p2l) 
-    print("Transformation is:")
-    print(reg_p2l.transformation)
-    print("Transformed center:")
-    print(o3d.geometry.PointCloud(o3d.utility.Vector3dVector(np.asarray([[0.0,0.0,0.0]]))).transform(reg_p2l.transformation).get_center())
-    print("")
-    draw_registration_result(source, target, reg_p2l.transformation)
-
-    print(f"Accumulated time: {accumulatedTime:0.4f} seconds.")
-    """
