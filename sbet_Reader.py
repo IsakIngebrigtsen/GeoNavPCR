@@ -1,8 +1,11 @@
 import numpy as np
-import PDAL
-
+import time
+import logging as log
+""" 
+Code established from Superviser Morten Brunes
+"""
 def read_sbet(sbet_filename, smrmsg) -> np.array:
-    start_sbet = timer()
+    start_sbet = time.time()
 
     sbet_record_types = [
 
@@ -70,7 +73,7 @@ def read_sbet(sbet_filename, smrmsg) -> np.array:
 
     smrmsg_np = np.fromfile(smrmsg, dtype=np.dtype(smrmsg_record_types))
 
-    log.debug("Time read sbet: {:.3f}".format(timer() - start_sbet))
+    log.debug("Time read sbet: {:.3f}".format(time.time() - start_sbet))
 
     return sbet_np, smrmsg_np
 
@@ -78,6 +81,6 @@ def read_sbet(sbet_filename, smrmsg) -> np.array:
 if __name__ == "__main__":
     sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84 (3).out"
     smrmsg = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84-smrmsg (2).out"
-    sbet_np, smrmsg_np =read_sbet(sbet_filename, smrmsg)
-
+    sbet_np, smrmsg_np=read_sbet(sbet_filename, smrmsg)
+    print(sbet_np)
 
