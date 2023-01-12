@@ -4,6 +4,34 @@ import logging as log
 """ 
 Code established from Superviser Morten Brunes
 """
+
+# LEAP SECONDS
+DELTA_UNIX_GPS = 18
+datetimeformat = "%Y%m%d_%H%M%S"
+epoch = datetime.datetime.strptime("19800106_000000", datetimeformat)
+
+
+# finner gps uke fra dato i filnavn pcapfil
+def filename2gpsweek(pcap_file):
+    ymd_hms = (pcap_file.split('x')[1]).split('_')[1] + '_' + \
+              (pcap_file.split('x')[1]).split('_')[2].replace('.pcap', '')
+    utc = datetime.datetime.strptime(ymd_hms, datetimeformat)
+    tdiff = utc - epoch + datetime.timedelta(seconds=DELTA_UNIX_GPS)
+    gpsweek = tdiff.days // 7
+    return gpsweek
+
+
+# regner om fra unix time til gps seconds of week. Lidar bruker unix og sbet bruker seconds of week (SoW)
+def timestamp_unix2sow(unix, gps_week):
+    # Correction by Erlend: subtract epoch unix time as well!
+    # Another correction (?) by Erlend: removed subtraction of DELTA_UNIX_GPS -- this makes PCAP and SBET correspond.
+    sow = unix - 315964800 - (gps_week * 604800)
+    return sow
+
+
+def timestamp_sow2unix(sow, gps_week):
+    unix = sow + 315964800 + (gps_week * 604800)
+    return unix
 def read_sbet(sbet_filename, smrmsg) -> np.array:
     start_sbet = time.time()
 
