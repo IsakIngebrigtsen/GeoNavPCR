@@ -80,7 +80,7 @@ def print_frame_coordinates(gps_week,pcap_path, meta,sbet_path, frame_index=None
             xyz = remove_vehicle(xyz)
             pc_o3d, downsampeled_pc_PCAP = point_cloud_pros(xyz)
             printFunc(f' center = {pc_o3d.get_center()}')
-            x, y, z = transform(sbet_lat, sbet_lon, sbet_alt)
+            x, y, z = transform_CRS(sbet_lat, sbet_lon, sbet_alt)
             pc_transformed = copy.deepcopy(pc_o3d).translate((x, y, z), relative=False)
             printFunc(f' center_transformed = {pc_transformed.get_center()}')
 
@@ -102,7 +102,7 @@ def point_cloud_pros(xyz,voxel_size = 0.5):
 
     return pc_o3d, downsampeled_pc
 
-def transform(lat, lon, alt,FROM_CRS = 4326,TO_CRS = 32633):
+def transform_CRS(lat, lon, alt,FROM_CRS = 4326,TO_CRS = 32633):
     transformer = pyproj.Transformer.from_crs(FROM_CRS, TO_CRS)
 
     x, y, z = transformer.transform(lat,lon,alt)
@@ -133,6 +133,24 @@ def execute_fast_global_registration(source_down, target_down, source_fpfh,
         o3d.pipelines.registration.FastGlobalRegistrationOption(
             maximum_correspondence_distance=distance_threshold))
     return result
+
+def draw_las(pc_points,filename):
+    my_data = np.asarray(pc_points)
+
+    header = laspy.LasHeader(point_format=3, version="1.2")
+    header.add_extra_dim(laspy.ExtraBytesParams(name="random", type=np.int32))
+    header.offsets = np.min(my_data, axis=0)
+    header.scales = np.array([0.1, 0.1, 0.1])
+
+    # 2. Create a Las
+    las = laspy.LasData(header)
+
+    las.x = my_data[:, 0]
+    las.y = my_data[:, 1]
+    las.z = my_data[:, 2]
+
+    las.write(filename + ".las")
+
 if __name__ == "__main__":
     import laspy
     import open3d as o3d
@@ -167,26 +185,67 @@ if __name__ == "__main__":
     accumulatedTime = 0.0
     startTime = time.perf_counter()
     with open("frame_7.txt", 'w') as f:
-       pc_transformed_7 = print_frame_coordinates(gps_week, pcap_file, meta,sbet_path,7,printFunc=lambda l: f.write(l + "\n"))
+       pc_transformed_7 = print_frame_coordinates(gps_week, pcap_file, meta,sbet_path,70,printFunc=lambda l: f.write(l + "\n"))
 
 
     with open("frame_10.txt", 'w') as f:
-       pc_transformed_10 = print_frame_coordinates(gps_week, pcap_file, meta,sbet_path,10,printFunc=lambda l: f.write(l + "\n"))
+       pc_transformed_10 = print_frame_coordinates(gps_week, pcap_file, meta,sbet_path,74,printFunc=lambda l: f.write(l + "\n"))
+
 
     source = pc_transformed_7
     target = pc_transformed_10
+    saved_center = source.get_center()
+    source_center_init = source.get_center() - saved_center
+    target_center_init = target.get_center() - saved_center
+
+    source_transformed = copy.deepcopy(source).translate(source_center_init, relative=False)
+    target_transformed = copy.deepcopy(target).translate(target_center_init, relative=False)
+
+    downsampled_source = source_transformed.voxel_down_sample(voxel_size=0.5)
+    downsampled_target = target_transformed.voxel_down_sample(voxel_size=0.5)
+    accumulatedTime += time.perf_counter() - startTime
+    print(f"Downsampling (0.5) performed in {(time.perf_counter() - startTime) / 2.0:0.4f} seconds per cloud.")
+
+
+
+    threshold = 1
+    trans_init = np.identity(4)
+    draw_registration_result(downsampled_source, downsampled_target, trans_init)
+
+    trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)
+    trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)
+    trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)
+    trans_init = draw_icp(source_transformed, target_transformed, trans_init)
+
+
+
+    target = copy.deepcopy(target_transformed).transform(trans_init)
+    #source = copy.deepcopy(source_transformed).translate(source_center_init + saved_center, relative=False)
+    #target = copy.deepcopy(target_transformed).translate(target_transformed.get_center() + saved_center, relative=False)
+    #trans_init = draw_icp(source, source, trans_init)
+
+    #target = copy.deepcopy(target).transform(trans_init)
+
+    draw_las(source_transformed.points, "source_pointcloud")
+    draw_las(target_transformed.points, "target_pointcloud")
+
+
+    """
     voxel_size = 0.5
-    source_down, source_fpfh = preprocess_point_cloud(source, voxel_size)
-    target_down, target_fpfh = preprocess_point_cloud(target, voxel_size)
+    source_down, source_fpfh = preprocess_point_cloud(source_transformed, voxel_size)
+    target_down, target_fpfh = preprocess_point_cloud(target_transformed, voxel_size)
     result_ransac = execute_fast_global_registration(source_down, target_down,
                                                 source_fpfh, target_fpfh,
                                                 voxel_size)
     print(result_ransac)
+    """
+    """
     transformation = result_ransac.transformation
-    pc_10_trans = pc_transformed_10.transform(transformation)
+    pc_10_trans = target_transformed.transform(transformation)
     print(np.asarray(pc_transformed_10.points))
     # 1. Create a new header
     my_data = np.asarray(pc_transformed_7.points)
+
     header = laspy.LasHeader(point_format=3, version="1.2")
     header.add_extra_dim(laspy.ExtraBytesParams(name="random", type=np.int32))
     header.offsets = np.min(my_data, axis=0)
@@ -200,3 +259,4 @@ if __name__ == "__main__":
     las.z = my_data[:, 2]
 
     las.write("new_file_3.las")
+    """

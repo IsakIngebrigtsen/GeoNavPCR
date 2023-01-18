@@ -117,17 +117,17 @@ def draw_icp(source,target,trans_init):
 
 
 if __name__ == "__main__":
+    filename = "OS-1-128_992035000186_1024x10_20211021_194723"
+    pathBase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-PCAP\\"
+    pcap_file = pathBase + filename + ".pcap"
+    meta = pathBase + filename + ".json"
 
-    pathBase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\data\\OS-1-128_992035000186_1024x10"
-
-    pcap_file = pathBase + ".pcap"
-    meta = pathBase + ".json"
     accumulatedTime = 0.0
     startTime = time.perf_counter()
 
-    source = get_frame(pcap_file, meta, 90)
+    source = get_frame(pcap_file, meta, 70)
 
-    target = get_frame(pcap_file, meta, 100)
+    target = get_frame(pcap_file, meta, 74)
 
     source = source.reshape((-1, 3))
     target = target.reshape((-1, 3))
