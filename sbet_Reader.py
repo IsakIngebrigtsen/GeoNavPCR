@@ -1,6 +1,9 @@
 import numpy as np
 import time
 import logging as log
+import datetime
+import pandas as pd
+import pyproj
 """ 
 Code established from Superviser Morten Brunes
 """
@@ -32,6 +35,8 @@ def timestamp_unix2sow(unix, gps_week):
 def timestamp_sow2unix(sow, gps_week):
     unix = sow + 315964800 + (gps_week * 604800)
     return unix
+
+
 def read_sbet(sbet_filename, smrmsg) -> np.array:
     start_sbet = time.time()
 
@@ -104,11 +109,12 @@ def read_sbet(sbet_filename, smrmsg) -> np.array:
     log.debug("Time read sbet: {:.3f}".format(time.time() - start_sbet))
 
     return sbet_np, smrmsg_np
-
-
 if __name__ == "__main__":
-    sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84 (3).out"
-    smrmsg = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84-smrmsg (2).out"
-    sbet_np, smrmsg_np=read_sbet(sbet_filename, smrmsg)
-    print(sbet_np)
+    sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
+    smrmsg = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84-smrmsg.out"
 
+    FROM_CRS = 4326 #WGS84
+    TO_CRS =  25832 #UTM32
+    sbet_np, smrmsg_np  =read_sbet(sbet_filename, smrmsg)
+
+    gpsweek = filename2gpsweek("C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-Standalone-PCAP\\OS-1-128_992035000186_1024x10_20211021_200041.pcap")

@@ -118,7 +118,7 @@ if __name__ == "__main__":
     source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\1024x10_20211021_194620.laz"
     target_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\1024x10_20211021_200226.laz"
     source, target, source_down, target_down, source_fpfh, target_fpfh = prepare_dataset(source_init, target_init, voxel_size)
-
+    """
     start = time.time()
     result_fast = execute_fast_global_registration(source_down, target_down,
                                                    source_fpfh, target_fpfh,
@@ -128,8 +128,6 @@ if __name__ == "__main__":
     ICP.draw_registration_result(source_down, target_down, result_fast.transformation)
 
     # Create a 3D matplotlib plot showing the data
-
-
     """
     [x, y, z] = [c.flatten() for c in np.dsplit(source_down.points, 3)]
     ax = plt.axes(projection='3d')
@@ -142,4 +140,3 @@ if __name__ == "__main__":
     ax.scatter(x, y, z, c=z_col, s=0.2)
 
     plt.show()
-    """

@@ -34,7 +34,7 @@ def draw_registration_result(source, target, transformation):
     # initialize camera settings
     ctr = vis.get_view_control()
     ctr.set_zoom(0.1)
-    ctr.set_lookat([0, 0, 0])
+    ctr.set_lookat(source.get_center())
     ctr.set_up([0.85, 0.12, 0.52])
 
     # run visualizer main loop
