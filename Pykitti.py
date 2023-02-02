@@ -9,7 +9,7 @@ __author__ = "Lee Clement"
 __email__ = "lee.clement@robotics.utias.utoronto.ca"
 
 basedir = 'C:\\Users\\isakf\Documents\\1_Geomatikk\\Master\\Data\\KITTI\\dataset'
-sequence = "01"
+sequence = "00"
 
 # The 'frames' argument is optional - default: None, which loads the whole dataset.
 # Calibration, timestamps, and IMU data are read automatically.
@@ -25,9 +25,9 @@ dataset = pykitti.odometry(basedir, sequence, frames=range(0, 20, 5))
 # dataset.velo:       Generator to load velodyne scans as [x,y,z,reflectance]
 
 # Grab some data
-#second_pose = dataset.poses[1]
+second_pose = dataset.poses[1]
 first_gray = next(iter(dataset.gray))
-#first_cam1 = next(iter(dataset.cam1))
+first_cam1 = next(iter(dataset.cam1))
 first_rgb = dataset.get_rgb(0)
 first_cam2 = dataset.get_cam2(0)
 third_velo = dataset.get_velo(2)
@@ -41,7 +41,7 @@ print('\nGray stereo pair baseline [m]: ' + str(dataset.calib.b_gray))
 print('\nRGB stereo pair baseline [m]: ' + str(dataset.calib.b_rgb))
 
 print('\nFirst timestamp: ' + str(dataset.timestamps[0]))
-#print('\nSecond ground truth pose:\n' + str(second_pose))
+print('\nSecond ground truth pose:\n' + str(second_pose))
 
 f, ax = plt.subplots(2, 2, figsize=(15, 5))
 ax[0, 0].imshow(first_gray[0], cmap='gray')

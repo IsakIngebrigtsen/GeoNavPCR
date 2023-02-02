@@ -12,7 +12,6 @@ def read_sbet_pdal(sbet_file, smrmsg_file, FROM_CRS, TO_CRS):
     pipeline_sbet = pdal.Reader.sbet(filename=sbet_file).pipeline()
 
     pipeline_sbet.execute()
-
     sbet_file_np = pipeline_sbet.arrays
 
     pipeline_smrmsg = pdal.Reader.smrmsg(filename=smrmsg_file).pipeline()

@@ -1,14 +1,3 @@
-import laspy
-import open3d as o3d
-import ouster.pcap as pcap
-import ouster.client as client
-from contextlib import closing
-from more_itertools import nth
-import numpy as np
-import os
-import pyproj
-import copy
-import time
 def get_frame(pcap_file, meta, frame):
     # Read the metadata from the JSON file.
 
@@ -146,8 +135,8 @@ def point_cloud_pros(xyz,voxel_size = 0.5):
     return pc_o3d, downsampeled_pc
 
 
-def transform_CRS(lat, lon, alt,FROM_CRS = 4326,TO_CRS = 5972,geoid_height = 39.438):
-
+def transform_CRS(lat, lon, alt,FROM_CRS = 4326,TO_CRS = 5973,geoid_height = 39.438):
+    #25832, 5972
     transformer = pyproj.Transformer.from_crs(FROM_CRS, TO_CRS)
 
     x, y, z = transformer.transform(lat,lon,alt)
