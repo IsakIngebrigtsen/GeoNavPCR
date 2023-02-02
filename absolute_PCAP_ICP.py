@@ -1,5 +1,5 @@
 
-def transform_pcap(pcap,metadata, sbet=None, frame=None):
+def transform_pcap(pcap, metadata, sbet=None, frame=None, geoid = 0.0):
     import sys
     sys.path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot-lidar")
     from pcapReader import PcapReader
@@ -11,18 +11,16 @@ def transform_pcap(pcap,metadata, sbet=None, frame=None):
     coord, rotate = pcap_reader.get_coordinates() #Erlend Dahl
     lat = coord[frame_index].x
     lon = coord[frame_index].y
-    center_coord_UTM33 = np.array((lat, lon, coord[frame_index].alt - geoid_height))
+    center_coord_UTM33 = np.array((lat, lon, coord[frame_index].alt - geoid))
 
+    raw_pointcloud = reader.get_frame(pcap, metadata, frame) #PCAP Software
+    raw_pointcloud_correct_shape = raw_pointcloud.reshape((-1, 3))
+    point_cloud_prossesing = pcap_reader.remove_vehicle(raw_pointcloud_correct_shape) # Erlend Dahl
+    point_cloud_prossesing = pcap_reader.remove_outside_distance(30, point_cloud_prossesing)
+    pc_o3d = reader.point_cloud_pros(point_cloud_prossesing)
 
-
-    xyz = reader.get_frame(pcap, metadata, frame) #PCAP Software
-    xyz = xyz.reshape((-1, 3))
-    xyz = pcap_reader.remove_vehicle(xyz) # Erlend Dahl
-    xyz = pcap_reader.remove_outside_distance(30, xyz)
-    pc_o3d, downsampeled_pc_PCAP = reader.point_cloud_pros(xyz)
-
-    pc_transformed = copy.deepcopy(pc_o3d).translate(center_coord_UTM33, relative=False)
-    return pc_transformed
+    pc_transformed_UTM = copy.deepcopy(pc_o3d).translate(center_coord_UTM33, relative=False)
+    return pc_transformed_UTM
 def initial_transform(source,target):
     saved_center = source.get_center()
     source_center_init = source.get_center() - saved_center
@@ -32,6 +30,14 @@ def initial_transform(source,target):
     downsampled_source = source_transformed.voxel_down_sample(voxel_size=0.5)
     downsampled_target = target_transformed.voxel_down_sample(voxel_size=0.5)
     return downsampled_source, source_transformed,downsampled_target, target_transformed
+
+def get_gps_week(pcap_path = None, pcap_filename = None):
+    import os
+    from sbetParser import filename2gpsweek
+    if pcap_path is not None:
+        pcap_filename = os.path.basename(pcap_path)
+    return filename2gpsweek(pcap_filename)
+
 
 if __name__ == "__main__":
 
@@ -46,9 +52,8 @@ if __name__ == "__main__":
     from ICP_Point import draw_registration_result,draw_icp
     voxel_size = 0.5  # means 5cm for this dataset
     source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\1024x10_20211021_195548.laz"
-    target_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\1024x10_20211021_200226.laz"
-    xyz = reader.read_laz(source_init)
-    pc_o3d_laz, downsampeled_pc = reader.point_cloud_pros(xyz)
+    pc_raw_laz = reader.read_laz(source_init)
+    pc_o3d_laz = reader.point_cloud_pros(pc_raw_laz)
 
     filename = "OS-1-128_992035000186_1024x10_20211021_195548"
     pathBase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-PCAP\\"
@@ -56,17 +61,17 @@ if __name__ == "__main__":
     meta = pathBase + filename + ".json"
     sbet_file = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
 
-    gps_week = reader.get_gps_week(pcap_filename=filename)
+    gps_week = get_gps_week(pcap_filename=filename)
 
     accumulatedTime = 0.0
     startTime = time.perf_counter()
-    frame_index = 70
+    frame_index = 140
     geoid_height =  39.438
 
     with open("frame_7.txt", 'w') as f:
-        pc_transformed = transform_pcap(pcap_file,meta, sbet_file, frame_index)
+        pc_transformed = transform_pcap(pcap_file,meta, sbet_file, frame_index,geoid_height)
     with open("frame_7.txt", 'w') as f:
-        pc_transformed_source = transform_pcap(pcap_file,meta, sbet_file, 74)
+        pc_transformed_source = transform_pcap(pcap_file,meta, sbet_file, 74,geoid_height)
     source = pc_o3d_laz
     target = pc_transformed
     saved_center = source.get_center()
@@ -107,8 +112,9 @@ if __name__ == "__main__":
 
     trans_init = draw_icp(source_transformed, target_transformed, trans_init)
     target = copy.deepcopy(target_transformed).transform(trans_init)
-    reader.draw_las(source_transformed.points, "test_190")
-    reader.draw_las(target.points, "target_test")
-    source_transformed = copy.deepcopy(source).translate(saved_center, relative=False)
-    target_transformed = copy.deepcopy(target).translate(target.get_center() + saved_center, relative=False)
 
+    source_transformed = copy.deepcopy(source_transformed).translate(saved_center, relative=False)
+    target_transformed = copy.deepcopy(target_transformed).translate(target.get_center() + saved_center, relative=False)
+
+    reader.draw_las(source.points, "source_test")
+    reader.draw_las(target.points, "target_test")

@@ -16,7 +16,7 @@ def draw_registration_result(pc_1, pc_2, transformation):
     source_temp.paint_uniform_color([1, 0.706, 0])
     target_temp.paint_uniform_color([0, 0.651, 0.929])
 
-    source_temp.transform(transformation)
+    source_temp.transform(transformation) # is this correct? should one not rotate the target point cloud
 
     # create point cloud and coordinate axes geometries
     axes = o3d.geometry.TriangleMesh.create_coordinate_frame(1.0)

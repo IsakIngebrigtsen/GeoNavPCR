@@ -1,3 +1,14 @@
+import laspy
+import open3d as o3d
+import ouster.pcap as pcap
+import ouster.client as client
+from contextlib import closing
+from more_itertools import nth
+import numpy as np
+import os
+import pyproj
+import copy
+import time
 def get_frame(pcap_file, meta, frame):
     # Read the metadata from the JSON file.
 
@@ -39,16 +50,12 @@ def get_sbet_timestamp(packet=None, timestamps=None):
 
         # There is a very slight difference, but using the final timestamp seems to give the best position.
     return np.mean(timestamps)
-
-
 def get_gps_week(pcap_path = None, pcap_filename = None):
     import os
     from sbetParser import filename2gpsweek
     if pcap_path is not None:
         pcap_filename = os.path.basename(pcap_path)
     return filename2gpsweek(pcap_filename)
-
-
 def rotate_points(coords, heading):
     """ Returns all coordinates rotated by the given heading. """
 
@@ -130,9 +137,9 @@ def point_cloud_pros(xyz,voxel_size = 0.5):
 
     pc_o3d.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
 
-    downsampeled_pc = pc_o3d.voxel_down_sample(voxel_size)
+    #downsampeled_pc = pc_o3d.voxel_down_sample(voxel_size)
 
-    return pc_o3d, downsampeled_pc
+    return pc_o3d #, downsampeled_pc
 
 
 def transform_CRS(lat, lon, alt,FROM_CRS = 4326,TO_CRS = 5973,geoid_height = 39.438):
