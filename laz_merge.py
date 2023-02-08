@@ -31,3 +31,5 @@ except:
     tbinfo = traceback.format_tb(tb)[0]
     print('Error in append las')
     print("PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError     Info:\n" + str(sys.exc_info()[1]))
+
+

@@ -2,5 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/teapot_lidar" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/teapot_lidar/probreg" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/teapot_lidar/probreg/third_party/eigen" vcs="Git" />
   </component>
 </project>

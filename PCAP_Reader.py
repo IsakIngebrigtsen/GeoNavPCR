@@ -9,24 +9,6 @@ import os
 import pyproj
 import copy
 import time
-def get_frame(pcap_file, meta, frame):
-    # Read the metadata from the JSON file.
-
-    with open(meta, 'r') as f:
-        metadata = client.SensorInfo(f.read())
-
-    # Open the LIDAR data source from the PCAP file
-    source = pcap.Pcap(pcap_file, metadata)
-
-    # Read the 50th LIDAR frame
-    with closing(client.Scans(source)) as scans:
-        scan = nth(scans, frame)
-    # Create a function that translates coordinates to a plottable coordinate system
-    xyzlut = client.XYZLut(source.metadata)
-    xyz = xyzlut(scan)
-    return xyz
-
-
 def remove_vehicle(frame, cloud = None):
     # Remove the vehicle, which is always stationary at the center. We don't want that
     # to interfere with the point cloud alignment.
@@ -41,8 +23,7 @@ def remove_vehicle(frame, cloud = None):
 
 def read_laz(laz_file):
     las = laspy.read(laz_file)
-    xyz = las.xyz
-    return xyz
+    return las.xyz
 
 def get_sbet_timestamp(packet=None, timestamps=None):
     if timestamps is None:
@@ -52,6 +33,7 @@ def get_sbet_timestamp(packet=None, timestamps=None):
     return np.mean(timestamps)
 def get_gps_week(pcap_path = None, pcap_filename = None):
     import os
+    sys.path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot-lidar")
     from sbetParser import filename2gpsweek
     if pcap_path is not None:
         pcap_filename = os.path.basename(pcap_path)
@@ -130,26 +112,21 @@ def print_frame_coordinates(gps_week,pcap_path, meta,sbet_path, frame_index=None
 def point_cloud_pros(xyz,voxel_size = 0.5):
     # Process the point cloud data, so that it comes in a standardised format from open 3d.
     xyz = xyz.reshape((-1, 3))
-
     xyz = remove_vehicle(xyz)
-
     pc_o3d = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(xyz))
-
     pc_o3d.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
-
     #downsampeled_pc = pc_o3d.voxel_down_sample(voxel_size)
 
-    return pc_o3d #, downsampeled_pc
+    return pc_o3d
 
 
-def transform_CRS(lat, lon, alt,FROM_CRS = 4326,TO_CRS = 5973,geoid_height = 39.438):
+def transform_CRS(lat, lon, alt,FROM_CRS = 4326,TO_CRS = 5972,geoid_height = 39.438):
     #25832, 5972
     transformer = pyproj.Transformer.from_crs(FROM_CRS, TO_CRS)
 
     x, y, z = transformer.transform(lat,lon,alt)
     z -= geoid_height
     return x, y, z
-
 
 def preprocess_point_cloud(pcd, voxel_size):
     print(":: Downsample with a voxel size %.3f." % voxel_size)
@@ -176,23 +153,6 @@ def execute_fast_global_registration(source_down, target_down, source_fpfh,
         o3d.pipelines.registration.FastGlobalRegistrationOption(
             maximum_correspondence_distance=distance_threshold))
     return result
-
-def draw_las(pc_points,filename):
-    my_data = np.asarray(pc_points)
-
-    header = laspy.LasHeader(point_format=3, version="1.2")
-    header.add_extra_dim(laspy.ExtraBytesParams(name="random", type=np.int32))
-    header.offsets = np.min(my_data, axis=0)
-    header.scales = np.array([0.1, 0.1, 0.1])
-
-    # 2. Create a Las
-    las = laspy.LasData(header)
-
-    las.x = my_data[:, 0]
-    las.y = my_data[:, 1]
-    las.z = my_data[:, 2]
-
-    las.write(filename + ".las")
 
 def refine_registration(source, target, source_fpfh, target_fpfh, voxel_size):
     distance_threshold = voxel_size * 0.4
@@ -221,15 +181,15 @@ if __name__ == "__main__":
     target_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\1024x10_20211021_200226.laz"
 
     xyz = read_laz(source_init)
-    pc_o3d_laz, downsampeled_pc = point_cloud_pros(xyz)
+    pc_o3d_laz = point_cloud_pros(xyz)
 
     filename = "OS-1-128_992035000186_1024x10_20211021_195836"
     pathBase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-PCAP\\"
     pcap_file = pathBase + filename + ".pcap"
     meta = pathBase + filename + ".json"
     sbet_path =  "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
-    #xyz_Pcap = get_frame(pcap_file,meta,7)
-    #pc_o3d_Pcap, downsampeled_pc_PCAP = point_cloud_pros(xyz_Pcap)
+    xyz_Pcap = get_frame(pcap_file,meta,70)
+    pc_o3d_Pcap = point_cloud_pros(xyz_Pcap)
     gps_week = get_gps_week(pcap_filename= filename)
 
     #print(np.asarray(pc_o3d_Pcap.points))
@@ -238,26 +198,18 @@ if __name__ == "__main__":
 
 
     source = pc_o3d_laz
-    target = pc_transformed_10
-    saved_center = source.get_center()
-    #saved_center[2] -=39.438 #transform to NN2000
-    source_center_init = source.get_center()- saved_center
-    target_center_init = target.get_center() - saved_center
-    #source_center_init[2] -= 39.438
-    source_transformed = copy.deepcopy(source).translate(source_center_init, relative=False)
-    target_transformed = copy.deepcopy(target).translate(target_center_init, relative=False)
-
-    downsampled_source = source_transformed.voxel_down_sample(voxel_size=0.5)
-    downsampled_target = target_transformed.voxel_down_sample(voxel_size=0.5)
-    accumulatedTime += time.perf_counter() - startTime
-    print(f"Downsampling (0.5) performed in {(time.perf_counter() - startTime) / 2.0:0.4f} seconds per cloud.")
+    target = pc_o3d_Pcap
+    from absolute_PCAP_ICP import initial_transform
+    downsampled_source, source_transformed, downsampled_target, target_transformed = initial_transform(source, target)
 
     threshold = 1
     trans_init = np.identity(4)
     draw_registration_result(downsampled_source, downsampled_target, trans_init)
 
     transformation = np.identity(4)
+    accumulatedTime = 0
     for k in range(2):
+
         trans_init = transformation
         print("Apply point-to-plane ICP")
         startTime = time.perf_counter()

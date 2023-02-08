@@ -44,24 +44,6 @@ def draw_registration_result(pc_1, pc_2, transformation):
     vis.destroy_window()
 
 
-def get_frame(pcap_file,meta, frame):
-    # Read the metadata from the JSON file.
-
-    with open(meta, 'r') as f:
-        metadata = client.SensorInfo(f.read())
-
-    # Open the LIDAR data source from the PCAP file
-    source = pcap.Pcap(pcap_file, metadata)
-
-    # Read the 50th LIDAR frame
-    with closing(client.Scans(source)) as scans:
-        scan = nth(scans, frame)
-    # Create a function that translates coordinates to a plottable coordinate system
-    xyzlut = client.XYZLut(source.metadata)
-    xyz = xyzlut(scan)
-    return xyz
-
-
 def match(source, target, threshold = 1, trans_init = None, max_iterations=100):
 
     # Initialize an initial transformation. This is meant to be a
@@ -122,7 +104,7 @@ if __name__ == "__main__":
     pathBase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-PCAP\\"
     pcap_file = pathBase + filename + ".pcap"
     meta = pathBase + filename + ".json"
-
+    from absolute_PCAP_ICP import get_frame
     accumulatedTime = 0.0
     startTime = time.perf_counter()
 
