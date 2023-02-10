@@ -14,6 +14,7 @@ def transform_pcap(pcap_raw, metadata, sbet=None, frame=None, geoid=0.0):
     pcap_reader.print_info(printFunc=lambda l: f.write(l + "\n"), frame_index=frame)  # Erlend Dahl Teapot
     position = pcap_reader.get_coordinates()  # Erlend Dahl Teapot
     # Collects the lat, lon, alt, and heading at a given frame Teapot
+    print(position)
     lat = position[frame].x
     lon = position[frame].y
     heading = position[frame].heading
@@ -27,7 +28,7 @@ def transform_pcap(pcap_raw, metadata, sbet=None, frame=None, geoid=0.0):
     pc_o3d = point_cloud_pros(point_cloud_prossesing)
     rotation_matrix = pc_o3d.get_rotation_matrix_from_axis_angle(np.array([0, 0, quadrant(heading)]))  # Open3d
 
-    pc_o3d.rotate(rotation_matrix, center=(pc_o3d.get_center()))  # open3d
+    pc_o3d.rotate(rotation_matrix, center=([0, 0, 0]))  # open3d
     pc_transformed_utm = copy.deepcopy(pc_o3d).translate(center_coord_utm33, relative=False)  # open3d
     return pc_transformed_utm
 
@@ -102,7 +103,7 @@ def o3d_icp(init_source, init_target, transformation, iterations, threshold_valu
             o3d.pipelines.registration.TransformationEstimationPointToPlane(),
             o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=100))
         if k > 1 and np.abs(np.mean(reg_p2l.transformation-transformation)) < 1e-16:
-            print(f'ICP ran {k} number of iteration before converging.')
+            print(f'ICP ran {k} times before converging.')
             transformation = reg_p2l.transformation
             break
         transformation = reg_p2l.transformation
@@ -128,6 +129,23 @@ def draw_las(pc_points, file_name):
     las.write(file_name + ".las")
 
 
+def filetype(filename, system="CPOS"):
+    if system == "CPOS":
+        raw_file = "OS-1-128_992035000186_1024x10_20211021_" + filename
+        pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-PCAP\\"
+        sbet = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
+        pcap = pathbase + raw_file + ".pcap"
+        metadata = pathbase + raw_file + ".json"
+        return pcap, metadata, sbet
+    elif system == "PPP":
+        raw_file = "OS-1-128_992035000186_1024x10_20211021_" + filename
+        pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-Standalone-PCAP\\"
+        sbet = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84.out"
+        pcap = pathbase + raw_file + ".pcap"
+        metadata = pathbase + raw_file + ".json"
+        return pcap, metadata, sbet
+
+
 if __name__ == "__main__":
 
     import sys
@@ -138,24 +156,20 @@ if __name__ == "__main__":
     from ICP_Point import draw_registration_result, draw_icp
 
     voxel_size = 0.5  # means 5cm for this dataset
-    file = "195032"
+    file = "195011"
     accumulatedTime = 0.0
     startTime = time.perf_counter()
-    frame_index = 150
+    frame_index = 170
     geoid_height = 39.438
     source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\1024x10_20211021_" + file + ".laz"
-    # source_init = "C:\\Users\\isakf\Documents\\1_Geomatikk\\Master\\Data\\Meged_file.las"
+    # source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Meged_file.las"
 
     pc_raw_laz = read_laz(source_init)
     pc_o3d_laz = point_cloud_pros(pc_raw_laz)
-
-    filename = "OS-1-128_992035000186_1024x10_20211021_" + file
-    pathBase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-PCAP\\"
-    pcap_file = pathBase + filename + ".pcap"
-    meta = pathBase + filename + ".json"
-    sbet_file = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
-
-    gps_week = get_gps_week(pcap_filename=filename)
+    # PPP, This can be used to see the PP folder
+    # pcap_file, meta, sbet_file = filetype("201524", system="PPP")
+    # CPOS
+    pcap_file, meta, sbet_file = filetype(file, system="CPOS")
 
     with open("frame_7.txt", 'w') as f:
         pc_transformed = transform_pcap(pcap_file, meta, sbet_file, frame_index, geoid_height)
@@ -165,17 +179,17 @@ if __name__ == "__main__":
     downsampled_source, source_transformed, downsampled_target, target_transformed = initial_transform(source, target)
     accumulatedTime += time.perf_counter() - startTime
     print(f"Downsampling (0.5) performed in {(time.perf_counter() - startTime) / 2.0:0.4f} seconds per cloud.")
+
     threshold = 1
     trans_init = np.identity(4)
+
     draw_registration_result(downsampled_source, downsampled_target, trans_init)
     trans_init = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9)
-
     trans_init = draw_icp(source_transformed, target_transformed, trans_init)
+    target_trans = copy.deepcopy(target_transformed).transform(trans_init)
 
-    target = copy.deepcopy(target_transformed).transform(trans_init)
+    source_ICP = copy.deepcopy(source_transformed).translate(saved_center, relative=False)
+    target_ICP = copy.deepcopy(target_trans).translate(target_trans.get_center() + saved_center, relative=False)
 
-    source_transformed = copy.deepcopy(source_transformed).translate(saved_center, relative=False)
-    target_transformed = copy.deepcopy(target_transformed).translate(target.get_center() + saved_center, relative=False)
-
-    draw_las(source_transformed.points, "source_test")
-    draw_las(target_transformed.points, "target_test")
+    draw_las(source_ICP.points, "source_test")
+    draw_las(target_ICP.points, "target_test")
