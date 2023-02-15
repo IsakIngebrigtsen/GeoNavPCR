@@ -16,7 +16,7 @@ def draw_registration_result(pc_1, pc_2, transformation):
     source_temp.paint_uniform_color([1, 0.706, 0])
     target_temp.paint_uniform_color([0, 0.651, 0.929])
 
-    source_temp.transform(transformation) # is this correct? should one not rotate the target point cloud
+    target_temp.transform(transformation) # is this correct? should one not rotate the target point cloud
 
     # create point cloud and coordinate axes geometries
     axes = o3d.geometry.TriangleMesh.create_coordinate_frame(1.0)
@@ -37,7 +37,8 @@ def draw_registration_result(pc_1, pc_2, transformation):
     ctr.set_zoom(0.1)
     ctr.set_lookat(source_temp.get_center())
     ctr.set_up([0.85, 0.12, 0.52])
-
+    print('source init')
+    print(target_temp.get_center())
     # run visualizer main loop
     print("Press Q or Excape to exit")
     vis.run()
@@ -72,6 +73,7 @@ def remove_vehicle(frame, cloud = None):
     vl = 2.2
     return cloud[((frame[:, 0] > 0.2) | (frame[:, 0] < -vl)) | ((frame[:, 1] > vw) | (frame[:, 1] < -vw)) | ((frame[:, 2] > 0.3) | (frame[:, 2] < -2))]
 
+
 def draw_icp(source,target,trans_init):
 
     threshold = 1
@@ -81,7 +83,7 @@ def draw_icp(source,target,trans_init):
     print("Apply point-to-plane ICP")
     startTime = time.perf_counter()
     reg_p2l = o3d.pipelines.registration.registration_icp(
-        source, target, threshold, trans_init,
+        target, source, threshold, trans_init,
         o3d.pipelines.registration.TransformationEstimationPointToPlane(),
         o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=100))
     accumulatedTime += time.perf_counter() - startTime

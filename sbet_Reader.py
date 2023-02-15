@@ -86,7 +86,7 @@ def read_sbet(sbet_filename, smrmsg) -> np.array:
 
         ("lon-std", np.float64),  # radians
 
-        ("alt-std", np.float64),
+        ("alt-std", np.float64), # sier noe om nøyaktigheten på fila. Punktskyen er direkte avledet av navigasjonen. 1-2 cm
 
         ("roll-std", np.float64),
 
@@ -110,11 +110,19 @@ def read_sbet(sbet_filename, smrmsg) -> np.array:
 
     return sbet_np, smrmsg_np
 if __name__ == "__main__":
-    sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
-    smrmsg = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84-smrmsg.out"
+    # sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
+    # smrmsg = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84-smrmsg.out"
+    # sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84.out"
+    # smrmsg = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84-smrmsg.out"
+    smrmsg = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Standalone-LAZ\\sbet-UTCtime-211021-Lillehammer-standalone-RT - PPP-WGS84-smrmsg.out"
+    sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Standalone-LAZ\\sbet-UTCtime-211021-Lillehammer-standalone-RT - PPP-WGS84.out"
 
     FROM_CRS = 4326 #WGS84
     TO_CRS =  25832 #UTM32
     sbet_np, smrmsg_np  =read_sbet(sbet_filename, smrmsg)
-
+    lat = np.mean(smrmsg_np["lat-std"])
+    lon = np.mean(smrmsg_np["lon-std"])
+    alt = np.mean(smrmsg_np["lon-std"])
+    time = np.mean(smrmsg_np["time"])
+    print(lat,lon,alt,time)
     gpsweek = filename2gpsweek("C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-Standalone-PCAP\\OS-1-128_992035000186_1024x10_20211021_200041.pcap")
