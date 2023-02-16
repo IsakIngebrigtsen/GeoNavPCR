@@ -3,9 +3,10 @@ import copy
 import time
 from ICP_Point import draw_registration_result, draw_icp
 import absolute_PCAP_ICP as Pr
+from collect_filename import get_files
 voxel_size = 0.5  # means 5cm for this dataset
-file = "195032"
-frame_index = 155
+file = get_files(8, 1)[0]
+frame_index = 110
 accumulatedTime = 0.0
 startTime = time.perf_counter()
 geoid_height = 39.438
@@ -41,3 +42,4 @@ trans_init = draw_icp(source_transformed, target_transformed, trans_init)
 
 Pr.draw_las(source_ICP.points, "source_test")
 Pr.draw_las(target_ICP.points, "target_test")
+

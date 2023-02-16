@@ -3,14 +3,11 @@ import ouster.client as client
 from contextlib import closing
 from more_itertools import nth
 import laspy
-import sys
-import open3d as o3d
 import numpy as np
 import copy
-import time
-
-
+import open3d as o3d
 def transform_pcap(pcap_raw, metadata, sbet_init=None, frame=None, geoid=0.0, fi=open("frame_7.txt", 'w')):
+
     import sys
     sys.path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot_lidar")
     from teapot_lidar.pcapReader import PcapReader
@@ -28,8 +25,10 @@ def transform_pcap(pcap_raw, metadata, sbet_init=None, frame=None, geoid=0.0, fi
     raw_pointcloud = get_frame(pcap_raw, metadata, frame)  # PCAP Software
 
     raw_pointcloud_correct_shape = raw_pointcloud.reshape((-1, 3))
-    point_cloud_prossesing = pcap_reader.remove_vehicle(raw_pointcloud_correct_shape)  # Erlend Dahl Teapot
-    point_cloud_prossesing = pcap_reader.remove_outside_distance(30, point_cloud_prossesing)  # Erlend Dahl Teapot
+    # Removes the mobile mapping vehicle
+    point_cloud_prossesing = pcap_reader.remove_vehicle(raw_pointcloud_correct_shape)  # Erlend Dahl Teapot removes vehicle
+    # Remove all data outside of a 40 meters radius.
+    point_cloud_prossesing = pcap_reader.remove_outside_distance(40, point_cloud_prossesing)  # Erlend Dahl Teapot
     pc_o3d = point_cloud_pros(point_cloud_prossesing)  # Point cloud porsessed by OPEN3ds sorftware
     rotation_matrix = pc_o3d.get_rotation_matrix_from_axis_angle(np.array([0, 0, quadrant(heading)]))  # Open3d
 
@@ -57,16 +56,17 @@ def get_frame(pcap_raw, metadata, frame):
 
 
 def point_cloud_pros(xyz):
+    import open3d as o3
     # Process the point cloud data, so that it comes in a standardised format from open 3d.
     xyz = xyz.reshape((-1, 3))  # puts the point cloud xyz(numpy array) format
-    pc_o3d = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(xyz))  # Makes point cloud in open3d format
-    pc_o3d.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))  # Estimates the normals
+    pc_o3d = o3.geometry.PointCloud(o3.utility.Vector3dVector(xyz))  # Makes point cloud in open3d format
+    pc_o3d.estimate_normals(search_param=o3.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))  # Estimates the normals
 
     return pc_o3d
 
 
 def quadrant(heading):
-    # Since the heading from the sbet files is not consistent with the quadrant. This code puts sets the heading in the right
+    # Since the heading from the sbet files is not consistent with the quadrant. This code sets the heading in the right direction
     heading = heading - np.pi/2
     if heading < 0:
         return np.absolute(heading)
@@ -116,7 +116,7 @@ def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_va
             transformation = reg_p2l.transformation
             break
         transformation = reg_p2l.transformation
-    return transformation, reg_p2l
+    return transformation
 
 
 def draw_las(pc_points, file_name):
@@ -163,16 +163,18 @@ if __name__ == "__main__":
     import numpy as np
     import copy
     import time
+    from collect_filename import get_files
+    # Inputs for the data
     voxel_size = 0.5  # means 5cm for this dataset
-    file = "195032"
-    file_list = ["195032", "195053", "195115", "195136"]
+    file_list = get_files(25, 1)  # the files from the 10th file and 5 files on
     accumulatedTime = 0.0
     startTime = time.perf_counter()
     geoid_height = 39.438
-    from_frame = 160
-    to_frame = 180
-    skips = 5
+    from_frame = 100
+    to_frame = 105
+    skips = 1
     sbet_prosess = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
+    # Empty Numpy arrays, that are being filled in the for loops below
     std = []
     std_raw = []
     target_coord = []
@@ -180,53 +182,63 @@ if __name__ == "__main__":
     raw_coord = []
     full_sbet = []
     timesteps = []
-    translation = []
-    for files in file_list:
+    trans_matrix = []
+    for files in file_list:  # For loop that goes through the PCAP files, and the corresponding laz files.
+        # Source_init is the raw laz file corresponding to the PCAP file
         source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\1024x10_20211021_" + files + ".laz"
-        # source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Meged_file.las"
-
+        # Transformes the Laz file into Open 3d point cloud.
         pc_raw_laz = read_laz(source_init)
         pc_o3d_laz = point_cloud_pros(pc_raw_laz)
-        source = pc_o3d_laz
-        # PPP, This can be used to see the PP folder
-        # pcap_file, meta, sbet_file = filetype("201524", system="PPP")
-        # CPOS
+        source = pc_o3d_laz  # Point cloud in open3d python format.
+
+        # initializes the Sbet file as ether the PPP og ETPOS file.
         sbet_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84.out"
-        pcap_file, meta, sbet_ETPOS = filetype(files, system="ETPOS")
-        if sbet_prosess == "PPP":
+        pcap_file, meta, sbet_ETPOS = filetype(files, system="ETPOS")  # Collects the correct PCAP, and metadata for the corresponding PCAP file.
+
+        if sbet_prosess == "PPP":  # chooses if PPP or ETPOS file is being used.
             sbet_file = sbet_PPP
         else:
             sbet_file = sbet_ETPOS
 
+        # Imports data from TEAPOT project.
         import sys
         sys.path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot_lidar")
+        # Imports the True Trajectory from the SBET file
         from teapot_lidar.sbetParser import SbetParser
         sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
-        # sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84.out"
-
+        # sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Standalone-LAZ\\sbet-UTCtime-211021-Lillehammer-standalone-RT - PPP-WGS84.out"
         sbet = SbetParser(sbet_ref)
+
+        # This for loop go through all frames choosen, with the designated skips
         for k in range(from_frame, to_frame, skips):
-            frame_index = k
-            with open("frame_7.txt", 'w') as f:
+            frame_index = k  # Collects frame
+            with open("frame_7.txt", 'w') as f:  # Transforms PCAP files to Open 3d point clouds, in the correct heading and coordinatesystem
                 pc_transformed, time_sbet, coord = transform_pcap(pcap_file, meta, sbet_file, frame_index, geoid_height)
             timesteps.append(time_sbet)  # collects all timesteps
             target = pc_transformed
-            saved_center = source.get_center()
+
+            saved_center = source.get_center()  # Saves center for later transformation.
+
+            # Initial transform that translate down to local coordinateframe
             downsampled_source, source_transformed, downsampled_target, target_transformed = initial_transform(source, target)
             threshold = 1
-            trans_init = np.identity(4)
-            trans_init, trans = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9)
-            trans_init, trans_l = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1)
-            target_transformed.transform(trans_init)
-            translation.append(np.mean(trans_init))
+
+            trans_init = np.identity(4)  # initial transformation matrix
+            # At this point, both the target and the source are in a local coordinateframe
+            trans_init = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9)  # Perform ICP on downsampled data
+            trans_init = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1)  # Perform ICP on the whole dataset.
+
+            target_transformed.transform(trans_init)  # Final Transformation for the target point cloud
+            trans_matrix.append(np.mean(trans_init))  # stores all transformation matrixes.
+            # Below the Source and Target gets translated back to absolute coordinates. The reason for this is because of constraintes on Open 3d ICP algorithm
             source_ICP = copy.deepcopy(source_transformed).translate(saved_center, relative=False)
             target_ICP = copy.deepcopy(target_transformed).translate(target_transformed.get_center() + saved_center, relative=False)
-            # Get sbet coord for the given frame
+
+            # Get sbet coord for a gived timestep
             referance_positon = sbet.get_position_sow(time_sbet)
             referance_coord = np.array([referance_positon.x, referance_positon.y, referance_positon.alt - geoid_height])
             deviation = target_ICP.get_center() - referance_coord
-            # full_sbet.append(referance_positon)
-
+            # To make sure that the time step is correct, The for loop below gives a timespam for point to find closest point to the True trajectory
             for steps in np.arange(time_sbet-1, time_sbet+1, 0.05):
                 temp_positon = sbet.get_position_sow(steps)
                 temp_coord = np.array([temp_positon.x, temp_positon.y, temp_positon.alt - geoid_height])
@@ -236,6 +248,7 @@ if __name__ == "__main__":
                     referance_coord = temp_coord
                     deviation = temp_std
 
+            # Fill all numpy arrays with the correct variables for each iteration
             pre_activation = target.get_center() - referance_coord
             std.append(deviation)
             std_raw.append(pre_activation)
@@ -243,85 +256,86 @@ if __name__ == "__main__":
             sbet_coord.append(referance_coord)
             raw_coord.append(target.get_center())
 
-        # print(f'The deviation between the the calculated and the referance is {deviation} m')
+    # Reshapes the arrays,to more readable and usable data.
     sbet_full = np.reshape(full_sbet, (-1, 3))
     std = np.reshape(std, (-1, 3))
     std_raw = np.reshape(std_raw, (-1, 3))
     sbet_coord = np.reshape(sbet_coord, (-1, 3))
     target_coord = np.reshape(target_coord, (-1, 3))
     raw_coord = np.reshape(raw_coord, (-1, 3))
-    # print(std)
-    # print(std_raw)
-    """
-    import matplotlib.pyplot as plt
 
-    print(f'filename:{file}')
-    average_distance_target = np.sqrt(np.mean(std[:, 1]) ** 2 + np.mean(std[:, 0]) ** 2)
-    average_distance_before = np.sqrt(np.mean(std_raw[:, 1]) ** 2 + np.mean(std_raw[:, 0]) ** 2)
-    print(f'average distanse wrong is {average_distance_target} m, and before the registration is it {average_distance_before} m')
-    print(f'min value is x={np.min(np.abs(std[:, 0]))} y={np.min(np.abs(std[:, 1]))}')
-    print(f'max value is x={np.max(np.abs(std[:, 0]))} y={np.max(np.abs(std[:, 1]))}')
-
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-    fig.set_size_inches(18.5, 18.5, forward=True)
-    line1 = f'Estimated deviation between the cars trajectory against the true trajectory'
-    line2 = f'Average distanse error is {np.round(average_distance_target,2)} m, and before the registration: {np.round(average_distance_before,2)} m'
-    line3 = f'Based on the files {file_list}'
-    line4 = f'From frame {from_frame} to frame {to_frame} with {skips -1} skips'
-    line5 = f'min value is x={np.min(np.abs(std[:, 0]))} y={np.min(np.abs(std[:, 1]))}'
-    line6 = f'max value is x={np.max(np.abs(std[:, 0]))} y={np.max(np.abs(std[:, 1]))}'
-    fig.suptitle(line1 + '\n' + line2 + "\n" + line3 + "\n" + line4 + '\n' + line5 + '\n' + line6)
-    ax1.plot(target_coord[:, 0], target_coord[:, 1], color="green")
-    ax1.plot(sbet_coord[:, 0], sbet_coord[:, 1], color="red")
-    ax1.set_title("Prossesed target against referance", loc='center', wrap=True)
-    ax1.legend(["Target after point cloud registration", "Referance"])
-
-    ax2.plot(raw_coord[:, 0], raw_coord[:, 1], color="green")
-    ax2.plot(sbet_coord[:, 0], sbet_coord[:, 1], color="red")
-    ax2.set_title("Raw target against referance", loc='center', wrap=True)
-    ax2.legend(["Raw target", "Referance"])
-
-    ax3.plot(std[:, 0], color="green")
-    ax3.plot(std[:, 1], color="red")
-    ax3.set_title("Deviation between prosessed data and referance trajectory", loc='center', wrap=True)
-    ax3.legend(["North (meters)", "East (meters)"])
-
-    ax4.plot(np.sqrt(std[:, 0]**2+std[:, 1]**2), color="green")
-    ax4.set_title("Deviation in 2d", loc='center', wrap=True)
-    ax4.legend(["Deviation (m)"])
-    fig.show()
-    fig.savefig('Estimatation' + time.strftime("%Y-%m-%d %H%M%S") + '.png')
-
-    
-    """
-
-    min_time = timesteps[0]
-    max_time = timesteps[-1]
-    sbet_test = []
+    # """
+    # import matplotlib.pyplot as plt
+    #
+    # print(f'filename:{file}')
+    # average_distance_target = np.sqrt(np.mean(std[:, 1]) ** 2 + np.mean(std[:, 0]) ** 2)
+    # average_distance_before = np.sqrt(np.mean(std_raw[:, 1]) ** 2 + np.mean(std_raw[:, 0]) ** 2)
+    # print(f'average distanse wrong is {average_distance_target} m, and before the registration is it {average_distance_before} m')
+    # print(f'min value is x={np.min(np.abs(std[:, 0]))} y={np.min(np.abs(std[:, 1]))}')
+    # print(f'max value is x={np.max(np.abs(std[:, 0]))} y={np.max(np.abs(std[:, 1]))}')
+    #
+    # fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+    # fig.set_size_inches(18.5, 18.5, forward=True)
+    # line1 = f'Estimated deviation between the cars trajectory against the true trajectory'
+    # line2 = f'Average distanse error is {np.round(average_distance_target,2)} m, and before the registration: {np.round(average_distance_before,2)} m'
+    # line3 = f'Based on the files {file_list}'
+    # line4 = f'From frame {from_frame} to frame {to_frame} with {skips -1} skips'
+    # line5 = f'min value is x={np.min(np.abs(std[:, 0]))} y={np.min(np.abs(std[:, 1]))}'
+    # line6 = f'max value is x={np.max(np.abs(std[:, 0]))} y={np.max(np.abs(std[:, 1]))}'
+    # fig.suptitle(line1 + '\n' + line2 + "\n" + line3 + "\n" + line4 + '\n' + line5 + '\n' + line6)
+    # ax1.plot(target_coord[:, 0], target_coord[:, 1], color="green")
+    # ax1.plot(sbet_coord[:, 0], sbet_coord[:, 1], color="red")
+    # ax1.set_title("Prossesed target against referance", loc='center', wrap=True)
+    # ax1.legend(["Target after point cloud registration", "Referance"])
+    #
+    # ax2.plot(raw_coord[:, 0], raw_coord[:, 1], color="green")
+    # ax2.plot(sbet_coord[:, 0], sbet_coord[:, 1], color="red")
+    # ax2.set_title("Raw target against referance", loc='center', wrap=True)
+    # ax2.legend(["Raw target", "Referance"])
+    #
+    # ax3.plot(std[:, 0], color="green")
+    # ax3.plot(std[:, 1], color="red")
+    # ax3.set_title("Deviation between prosessed data and referance trajectory", loc='center', wrap=True)
+    # ax3.legend(["North (meters)", "East (meters)"])
+    #
+    # ax4.plot(np.sqrt(std[:, 0]**2+std[:, 1]**2), color="green")
+    # ax4.set_title("Deviation in 2d", loc='center', wrap=True)
+    # ax4.legend(["Deviation (m)"])
+    # fig.show()
+    # fig.savefig('Estimatation' + time.strftime("%Y-%m-%d %H%M%S") + '.png')
+    #
+    # """
+    # Collects the first and last timestep from the frames
+    min_time = timesteps[0] - 0.5
+    max_time = timesteps[-1] + 0.5
+    # Initialise the sbet reader
     import sys
-
     sys.path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot_lidar")
     from teapot_lidar.sbetParser import SbetParser
-
     sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
-    # sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84.out"
+    sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84.out"
+
     sbet = SbetParser(sbet_ref)
+    # Produce the true trajectory with a set Hz
     true_trajectory = []
-    for k in np.arange(min_time, max_time, 0.1):
+    Hz = 50
+    for k in np.arange(min_time, max_time, 1/Hz):
         temp_positon = sbet.get_position_sow(k)
         temp_coord = np.array([temp_positon.x, temp_positon.y, temp_positon.alt - geoid_height])
         true_trajectory.append(temp_coord)
 
     true_trajectory = np.reshape(true_trajectory, (-1, 3))
+    # Use K nearest neighbour to find the shortest distance between the True trajectory and the target trajectory
     import scipy
-    tree = scipy.spatial.cKDTree(true_trajectory[:, 0:1])
-    nearest_referanced, ii = tree.query(target_coord[:, 0:1], k=[1])
-    nearest_raw, jj = tree.query(raw_coord[:, 0:1], k=[1])
+    tree = scipy.spatial.cKDTree(true_trajectory[:, 0:2])
+    nearest_raw, ii = tree.query(raw_coord[:, 0:2])
+    nearest_referanced, jj = tree.query(target_coord[:, 0:2])
+
 
     #%% Plot the data as subplots.
     import matplotlib.pyplot as plt
 
-    print(f'filename:{file}')
+    print(f'filename:{file_list[0]}')
     average_distance_target = np.mean(nearest_referanced)
     average_distance_before = np.mean(nearest_raw)
     print(f'average distanse wrong is {average_distance_target} m, and before the registration is it {average_distance_before} m')
@@ -339,32 +353,46 @@ if __name__ == "__main__":
     ax1.plot(target_coord[:, 0], target_coord[:, 1], color="green")
     ax1.plot(true_trajectory[:, 0], true_trajectory[:, 1], color="red")
     ax1.set_title("Target trajectory against true trajectory", loc='center', wrap=True)
-    ax3.set_xlabel("East (m)")
-    ax3.set_ylabel("North (m)")
+    ax1.grid()
+    ax1.set_xlabel("East (m)")
+    ax1.set_ylabel("North (m)")
     ax1.legend(["Target trajectory", "True trajectory"])
 
     ax2.plot(raw_coord[:, 0], raw_coord[:, 1], color="green")
     ax2.plot(true_trajectory[:, 0], true_trajectory[:, 1], color="red")
     ax2.set_title("PPP trajectory against True trajectory", loc='center', wrap=True)
     ax2.grid()
-    ax3.set_xlabel("East (m)")
-    ax3.set_ylabel("North (m)")
+    ax2.set_xlabel("East (m)")
+    ax2.set_ylabel("North (m)")
     ax2.legend(["PPP trajectory", "True trajectory"])
 
-    ax3.plot(std[:, 0], color="green")
-    ax3.plot(std[:, 1], color="red")
-    ax3.axhline(y=0.0, color='b', linestyle='-')
-    ax3.set_xlabel("Deviation (M)")
-    ax3.set_ylabel("Frame")
-    ax3.set_title("Deviation error between Target trajectory and referance trajectory", loc='center', wrap=True)
-    ax3.legend(["North (meters)", "East (meters)"])
+    # ax3.plot(std[:, 0], color="green")
+    # ax3.plot(std[:, 1], color="red")
+    # ax3.axhline(y=0.0, color='b', linestyle='-')
+    # ax3.set_xlabel("Frames")
+    # ax3.set_ylabel("Deviation (M)")
+    # ax3.set_title("Deviation error between Target trajectory and True trajectory", loc='center', wrap=True)
+    # ax3.legend(["North (meters)", "East (meters)"])
+
+    dev_x = target_coord[:, 0] - raw_coord[:, 0]
+    dev_y = target_coord[:, 1] - raw_coord[:, 1]
+    ax3.plot(dev_x, color="blue")
+    ax3.plot(dev_y, color="orange")
+    ax3.plot(np.sqrt(dev_x**2+dev_y**2), color = "cyan")
+    ax3.set_xlabel("Frames")
+    ax3.set_ylabel("Deviation (M)")
+    ax3.axhline(y=0.0, color='r', linestyle='-')
+    # ax3.set_xticks(1, int(len(target_coord[:, 0])))
+    ax3.set_title("Deviation error between Target trajectory and PPP trajectory", loc='center', wrap=True)
+    ax3.legend(["Deviation in North", "Deviation in East", "Deviation in 2D"])
 
     ax4.plot(nearest_raw, color="red")
-    ax4.plot(nearest_referanced, color ="green")
-    ax4.set_title("Deviation error in 2d from the true trajectory", loc='center', wrap=True)
-    ax4.set_xlabel("Frame")
+    ax4.plot(nearest_referanced, color="green")
+    ax4.set_title("Deviation error in 2D from the true trajectory", loc='center', wrap=True)
+    ax4.set_xlabel("Frames")
     ax4.set_ylabel("Deviation (m)")
-    ax4.legend(["Target trajectory", "PPP trajectory"])
+    # ax4.set_xticks(1, len(nearest_raw))
+    ax4.legend(["PPP trajectory", "Nearest trajectory"])
     fig.show()
     fig.savefig('Estimatation' + time.strftime("%Y-%m-%d %H%M%S") + '.png')
 
