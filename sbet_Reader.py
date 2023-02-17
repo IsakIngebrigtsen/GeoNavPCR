@@ -113,7 +113,7 @@ def read_sbet(sbet_filename, smrmsg) -> np.array:
 
 if __name__ == "__main__":
     from pyproj import Proj
-    transformer = Proj.from_crs(4326, 25832)
+    transformer = Proj.from_crs(4326, 5972)
     import matplotlib.pyplot as plt
 
     sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     FROM_CRS = 4326 #WGS84
     TO_CRS =  25832 #UTM32
     sbet_np_ETPOS, smrmsg_np_ETPOS  =read_sbet(sbet_filename, smrmsg)
-    sbet_np_PPP, smrmsg_np_PPP  =read_sbet(sbet_filename_PPP, smrmsg_PPP)
+    sbet_np_PPP, smrmsg_np_PPP  =read_sbet(sbet_filename, smrmsg)
     sbet_np_stand, smrmsg_np_stand = read_sbet(sbet_filename_stand, smrmsg_stand)
     # lat = np.mean(smrmsg_np["lat-std"])
     # lon = np.mean(smrmsg_np["lon-std"])
@@ -136,15 +136,22 @@ if __name__ == "__main__":
     gpsweek = filename2gpsweek("C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-Standalone-PCAP\\OS-1-128_992035000186_1024x10_20211021_200041.pcap")
     # plt.plot(sbet_np_ETPOS['lat'], sbet_np_ETPOS['lon'], color = "red")
     # plt.plot(sbet_np_PPP['lat'], sbet_np_PPP['lon'], color = "blue")
+
     sbet_np_ETPOS['lat'] = sbet_np_ETPOS['lat']*180 / np.pi
     sbet_np_ETPOS['lon'] = sbet_np_ETPOS['lon'] * 180 / np.pi
     sbet_np_PPP['lat'] = sbet_np_PPP['lat'] * 180 / np.pi
     sbet_np_PPP['lon'] = sbet_np_PPP['lon'] * 180 / np.pi
     sbet_np_stand['lat'] = sbet_np_stand['lat'] * 180 / np.pi
     sbet_np_stand['lon'] = sbet_np_stand['lon'] * 180 / np.pi
-    X_ETPOS, Y_ETPOS = transformer.transform(sbet_np_ETPOS['lat'],sbet_np_ETPOS['lon'])
-    X_PPP, Y_PPP = transformer.transform(sbet_np_PPP['lat'],sbet_np_PPP['lon'])
-    X_stand, Y_stand = transformer.transform(sbet_np_stand['lat'],sbet_np_stand['lon'])
+    X_ETPOS, Y_ETPOS,Z_ETPOS = transformer.transform(sbet_np_ETPOS['lat'],sbet_np_ETPOS['lon'],sbet_np_ETPOS['alt'])
+
+    import pandas as pd
+    doy = pd.Period("2021-10-21", freq="H").day_of_year
+    current_epoch = int(2021) + int(doy)/365  # Current Epoch ex: 2021.45
+    current_epoch = [current_epoch for k in range(sbet_np_PPP['lat'].size)]
+    transformer = Proj.from_crs(7912, 5972)
+    X_PPP, Y_PPP, Z_PPP, epoch = transformer.transform(sbet_np_PPP['lat'], sbet_np_PPP['lon'], sbet_np_PPP['alt'], current_epoch)
+    X_stand, Y_stand = transformer.transform(sbet_np_stand['lat'], sbet_np_stand['lon'])
 
     std_ETPOS_PPP = np.sqrt((X_PPP-X_ETPOS)**2 + (Y_PPP-Y_ETPOS)**2)
     av = []
@@ -155,59 +162,42 @@ if __name__ == "__main__":
     # std_ETPOS_stand = np.sqrt((X_stand-X_ETPOS)**2 + (Y_stand-Y_ETPOS)**2)
     #plt.plot(std_ETPOS_PPP, color = "blue")
     #print(np.mean(std_ETPOS_PPP))
-    import seaborn as sns
 
-    fig, (ax1) = plt.subplots(1,1)
-    fig.set_size_inches(30, 18.5, forward=True)
-    ax1.set_ylim([-0.01,0.05])
-    ax1.axhline(y=0.0, color='b', linestyle='-')
-    ax1.plot(smrmsg_np_ETPOS["time"], smrmsg_np_ETPOS["alt-std"], color="blue", linewidth=0.4)
-    ax1.plot(smrmsg_np_ETPOS["time"], smrmsg_np_ETPOS["lat-std"], color="green", linewidth=0.4)
-    ax1.plot(smrmsg_np_ETPOS["time"], smrmsg_np_ETPOS["lon-std"], color="red", linewidth=0.4)
-    ax1.grid(axis = 'y')
-    fig.show()
-    fig.savefig('Accurasy_ETPOS.png')
-
-    fig, (ax1) = plt.subplots(1,1)
-    fig.set_size_inches(30, 18.5, forward=True)
-    ax1.set_ylim([-0.01,1])
-    ax1.axhline(y=0.0, color='b', linestyle='-')
-    ax1.plot(smrmsg_np_PPP["time"], smrmsg_np_PPP["alt-std"], color="blue", linewidth=0.4)
-    ax1.plot(smrmsg_np_PPP["time"], smrmsg_np_PPP["lat-std"], color="green", linewidth=0.4)
-    ax1.plot(smrmsg_np_PPP["time"], smrmsg_np_PPP["lon-std"], color="red", linewidth=0.4)
-    ax1.grid(axis = 'y')
-    fig.show()
-    fig.savefig('Accurasy_PPP.png')
-
-    fig, (ax2) = plt.subplots(1, 1)
-    fig.set_size_inches(30, 18.5, forward=True)
-    ax2.plot(X_PPP-X_ETPOS,linewidth=0.4)
-    ax2.plot(Y_PPP - Y_ETPOS, linewidth=0.4)
-    ax2.grid(axis='y')
-    fig.savefig('std.png')
-
-
-    fig, (ax1,ax2,ax3,ax4) = plt.subplots(4, 1)
-    fig.set_size_inches(30, 18.5, forward=True)
+    fig, (ax1,ax2,ax3) = plt.subplots(3, 1,facecolor="#5539cc")
+    fig.set_size_inches(30, 30, forward=True)
+    ax1.set_facecolor("#6fc276")
+    ax2.set_facecolor("#6fc276")
+    ax3.set_facecolor("#6fc276")
     ax1.plot(smrmsg_np_ETPOS["alt-std"], color="blue", linewidth=0.4)
     ax1.plot(smrmsg_np_ETPOS["lat-std"], color="green", linewidth=0.4)
     ax1.plot(smrmsg_np_ETPOS["lon-std"], color="red", linewidth=0.4)
 
 
     # ax1.plot(X_stand, Y_stand)
-    ax2.plot(std_ETPOS_PPP)
-    ax3.plot(X_ETPOS, Y_ETPOS)
-    ax4.plot(X_PPP, Y_PPP)
+    ax2.plot(np.round(std_ETPOS_PPP[52000:55000], 4))
+    ax3.plot(X_ETPOS[52000:55000], Y_ETPOS[52000:55000])
+    ax3.plot(X_PPP[52000:55000], Y_PPP[52000:55000])
     # print(np.mean(std_ETPOS_stand))
     fig.show()
     fig.savefig('Accurasy.png')
+
+    # """
+    # from pandas_geojson import to_geojson, write_geojson
+    # import pandas as pd
+    # latlon = {'lat':sbet_np_ETPOS['lat'], 'lon': sbet_np_ETPOS['lon']}
+    # data = pd.DataFrame(latlon)
+    # #data = pd.read_csv('Test.csv')
+    # geo_json = to_geojson(df=data, lat='lat', lon='lon',
+    #                       properties=[])
+    # write_geojson(geo_json, filename='random.geojson', indent=4)
+    # """
+
     """
-    from pandas_geojson import to_geojson, write_geojson
-    import pandas as pd
-    latlon = {'lat':sbet_np_ETPOS['lat'], 'lon': sbet_np_ETPOS['lon']}
-    data = pd.DataFrame(latlon)
-    #data = pd.read_csv('Test.csv')
-    geo_json = to_geojson(df=data, lat='lat', lon='lon',
-                          properties=[])
-    write_geojson(geo_json, filename='random.geojson', indent=4)
+    Per Helges kode test
     """
+    X_ref2 = 3149785.9652
+    Y_ref2 = 598260.8822
+    Z_ref2 = 5495348.4927
+    current_epoch = int(2021) + int(doy) / 365  # Current Epoch ex: 2021.45
+    transformer = Proj.from_crs(4936, 5972 )
+    X,Y,Z,epoch = transformer.transform( X_ref2, Y_ref2, Z_ref2, current_epoch)

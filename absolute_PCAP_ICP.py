@@ -166,13 +166,13 @@ if __name__ == "__main__":
     from collect_filename import get_files
     # Inputs for the data
     voxel_size = 0.5  # means 5cm for this dataset
-    file_list = get_files(25, 1)  # the files from the 10th file and 5 files on
+    file_list = get_files(16, 1)  # the files from the 10th file and 5 files on
     accumulatedTime = 0.0
     startTime = time.perf_counter()
     geoid_height = 39.438
-    from_frame = 100
-    to_frame = 105
-    skips = 1
+    from_frame = 0
+    to_frame = 196
+    skips = 195
     sbet_prosess = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     # Empty Numpy arrays, that are being filled in the for loops below
     std = []
@@ -224,9 +224,14 @@ if __name__ == "__main__":
             threshold = 1
 
             trans_init = np.identity(4)  # initial transformation matrix
+            # import ICP_Point
+            # trans_init = ICP_Point.draw_icp(source_transformed, target_transformed, trans_init)
+
             # At this point, both the target and the source are in a local coordinateframe
             trans_init = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9)  # Perform ICP on downsampled data
             trans_init = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1)  # Perform ICP on the whole dataset.
+            import ICP_Point
+            trans_init = ICP_Point.draw_icp(source_transformed, target_transformed, trans_init)
 
             target_transformed.transform(trans_init)  # Final Transformation for the target point cloud
             trans_matrix.append(np.mean(trans_init))  # stores all transformation matrixes.
@@ -239,7 +244,7 @@ if __name__ == "__main__":
             referance_coord = np.array([referance_positon.x, referance_positon.y, referance_positon.alt - geoid_height])
             deviation = target_ICP.get_center() - referance_coord
             # To make sure that the time step is correct, The for loop below gives a timespam for point to find closest point to the True trajectory
-            for steps in np.arange(time_sbet-1, time_sbet+1, 0.05):
+            for steps in np.arange(time_sbet-0.1, time_sbet+0.1, 0.1):
                 temp_positon = sbet.get_position_sow(steps)
                 temp_coord = np.array([temp_positon.x, temp_positon.y, temp_positon.alt - geoid_height])
                 temp_std = target_ICP.get_center() - temp_coord
@@ -264,7 +269,6 @@ if __name__ == "__main__":
     target_coord = np.reshape(target_coord, (-1, 3))
     raw_coord = np.reshape(raw_coord, (-1, 3))
 
-    # """
     # import matplotlib.pyplot as plt
     #
     # print(f'filename:{file}')
@@ -304,7 +308,7 @@ if __name__ == "__main__":
     # fig.show()
     # fig.savefig('Estimatation' + time.strftime("%Y-%m-%d %H%M%S") + '.png')
     #
-    # """
+
     # Collects the first and last timestep from the frames
     min_time = timesteps[0] - 0.5
     max_time = timesteps[-1] + 0.5
@@ -313,7 +317,7 @@ if __name__ == "__main__":
     sys.path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot_lidar")
     from teapot_lidar.sbetParser import SbetParser
     sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
-    sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84.out"
+    #sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84.out"
 
     sbet = SbetParser(sbet_ref)
     # Produce the true trajectory with a set Hz
@@ -342,9 +346,9 @@ if __name__ == "__main__":
     print(f'min deviation error is {np.min(nearest_referanced)} m and max:{np.max(nearest_referanced)}')
 
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-    fig.set_size_inches(18.5, 18.5, forward=True)
+    fig.set_size_inches(30, 30, forward=True)
     line1 = f'Estimated deviation between the cars trajectory against the true trajectory'
-    line2 = f'Average distanse error is {np.round(average_distance_target,2)} m, and before the registration: {np.round(average_distance_before,2)} m'
+    line2 = f'Average distanse error is {np.round(average_distance_target,2)} m, and with the same timestamp: {np.round(np.mean(std),2)} m'
     line3 = f'Based on the files {file_list}'
     line4 = f'From frame {from_frame} to frame {to_frame} with {skips -1} skips'
     line5 = f'min deviation error is {np.round(np.min(nearest_referanced),3)} m and max:{np.round(np.max(nearest_referanced),3)}m'
@@ -388,12 +392,22 @@ if __name__ == "__main__":
 
     ax4.plot(nearest_raw, color="red")
     ax4.plot(nearest_referanced, color="green")
+    from scipy import stats
+    dev = np.sqrt(std[:,0]**2+std[:,1]**2)
+    st = []
+    for out in dev:
+        if out > 3:
+            st.append(np.median(dev))
+        else:
+            st.append(out)
+    ax4.plot(st)
+    res = stats.linregress(timesteps, st)
+
     ax4.set_title("Deviation error in 2D from the true trajectory", loc='center', wrap=True)
     ax4.set_xlabel("Frames")
     ax4.set_ylabel("Deviation (m)")
+    ax4.set_ylim([-0.04,3])
     # ax4.set_xticks(1, len(nearest_raw))
-    ax4.legend(["PPP trajectory", "Nearest trajectory"])
+    ax4.legend(["PPP trajectory", "Nearest trajectory","Nearest trajectory based on time"])
     fig.show()
-    fig.savefig('Estimatation' + time.strftime("%Y-%m-%d %H%M%S") + '.png')
-
-
+    fig.savefig('plots\\Estimatation' + time.strftime("%Y-%m-%d %H%M%S") + '.png')

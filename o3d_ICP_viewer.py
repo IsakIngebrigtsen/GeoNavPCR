@@ -5,8 +5,8 @@ from ICP_Point import draw_registration_result, draw_icp
 import absolute_PCAP_ICP as Pr
 from collect_filename import get_files
 voxel_size = 0.5  # means 5cm for this dataset
-file = get_files(8, 1)[0]
-frame_index = 110
+file = get_files(10, 1)[0]
+frame_index = 60
 accumulatedTime = 0.0
 startTime = time.perf_counter()
 geoid_height = 39.438
@@ -28,7 +28,7 @@ print(f"Downsampling (0.5) performed in {(time.perf_counter() - startTime) / 2.0
 threshold = 1
 trans_init = np.identity(4)
 
-draw_registration_result(downsampled_source, downsampled_target, trans_init)
+draw_registration_result(source_transformed, target_transformed, trans_init)
 trans_init = Pr.o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9)
 trans_init = Pr.o3d_icp(source_transformed, target_transformed, trans_init, iterations=1)
 trans_init = draw_icp(source_transformed, target_transformed, trans_init)

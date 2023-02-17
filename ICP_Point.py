@@ -34,14 +34,17 @@ def draw_registration_result(pc_1, pc_2, transformation):
 
     # initialize camera settings
     ctr = vis.get_view_control()
-    ctr.set_zoom(0.1)
+    ctr.set_zoom(0.3)
     ctr.set_lookat(source_temp.get_center())
     ctr.set_up([0.85, 0.12, 0.52])
     print('source init')
     print(target_temp.get_center())
     # run visualizer main loop
     print("Press Q or Excape to exit")
-    vis.run()
+    vis.poll_events()
+    vis.update_renderer()
+    vis.capture_screen_image('img_Pointcloud\\RUN' + time.strftime("%Y-%m-%d %H%M%S") + '.png')
+    #vis.run()
     vis.destroy_window()
 
 
