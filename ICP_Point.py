@@ -13,10 +13,12 @@ def draw_registration_result(pc_1, pc_2, transformation):
 
     source_temp = copy.deepcopy(pc_1)
     target_temp = copy.deepcopy(pc_2)
+
+
     source_temp.paint_uniform_color([1, 0.706, 0])
     target_temp.paint_uniform_color([0, 0.651, 0.929])
 
-    target_temp.transform(transformation) # is this correct? should one not rotate the target point cloud
+    target_temp.transform(transformation)
 
     # create point cloud and coordinate axes geometries
     axes = o3d.geometry.TriangleMesh.create_coordinate_frame(1.0)
@@ -35,7 +37,7 @@ def draw_registration_result(pc_1, pc_2, transformation):
     # initialize camera settings
     ctr = vis.get_view_control()
     ctr.set_zoom(0.3)
-    ctr.set_lookat(source_temp.get_center())
+    ctr.set_lookat(target_temp.get_center())
     ctr.set_up([0.85, 0.12, 0.52])
     print('source init')
     print(target_temp.get_center())

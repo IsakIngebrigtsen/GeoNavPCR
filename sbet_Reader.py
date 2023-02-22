@@ -116,17 +116,17 @@ if __name__ == "__main__":
     transformer = Proj.from_crs(4326, 5972)
     import matplotlib.pyplot as plt
 
-    sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
+    sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
     smrmsg = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84-smrmsg.out"
-    sbet_filename_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84.out"
-    smrmsg_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84-smrmsg.out"
+    sbet_filename_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\sbet-output-UTC-1000.out"
+    smrmsg_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\sbet-output-UTC-1000-smrmsg.out"
     smrmsg_stand = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Standalone-LAZ\\sbet-UTCtime-211021-Lillehammer-standalone-RT - PPP-WGS84-smrmsg.out"
     sbet_filename_stand = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Standalone-LAZ\\sbet-UTCtime-211021-Lillehammer-standalone-RT - PPP-WGS84.out"
 
     FROM_CRS = 4326 #WGS84
     TO_CRS =  25832 #UTM32
     sbet_np_ETPOS, smrmsg_np_ETPOS  =read_sbet(sbet_filename, smrmsg)
-    sbet_np_PPP, smrmsg_np_PPP  =read_sbet(sbet_filename, smrmsg)
+    sbet_np_PPP, smrmsg_np_PPP  =read_sbet(sbet_filename_PPP, smrmsg_PPP)
     sbet_np_stand, smrmsg_np_stand = read_sbet(sbet_filename_stand, smrmsg_stand)
     # lat = np.mean(smrmsg_np["lat-std"])
     # lon = np.mean(smrmsg_np["lon-std"])
@@ -149,16 +149,16 @@ if __name__ == "__main__":
     doy = pd.Period("2021-10-21", freq="H").day_of_year
     current_epoch = int(2021) + int(doy)/365  # Current Epoch ex: 2021.45
     current_epoch = [current_epoch for k in range(sbet_np_PPP['lat'].size)]
-    transformer = Proj.from_crs(7912, 5972)
+    transformer = Proj.from_crs(9000, 5972)
     X_PPP, Y_PPP, Z_PPP, epoch = transformer.transform(sbet_np_PPP['lat'], sbet_np_PPP['lon'], sbet_np_PPP['alt'], current_epoch)
     X_stand, Y_stand = transformer.transform(sbet_np_stand['lat'], sbet_np_stand['lon'])
 
-    std_ETPOS_PPP = np.sqrt((X_PPP-X_ETPOS)**2 + (Y_PPP-Y_ETPOS)**2)
-    av = []
-    for test in std_ETPOS_PPP:
-        if test > 1.0:
-            test = np.mean(av)
-        av.append(test)
+    # #std_ETPOS_PPP = np.sqrt((X_PPP-X_ETPOS)**2 + (Y_PPP-Y_ETPOS)**2)
+    # av = []
+    # for test in std_ETPOS_PPP:
+    #     if test > 1.0:
+    #         test = np.mean(av)
+    #     av.append(test)
     # std_ETPOS_stand = np.sqrt((X_stand-X_ETPOS)**2 + (Y_stand-Y_ETPOS)**2)
     #plt.plot(std_ETPOS_PPP, color = "blue")
     #print(np.mean(std_ETPOS_PPP))
@@ -174,9 +174,9 @@ if __name__ == "__main__":
 
 
     # ax1.plot(X_stand, Y_stand)
-    ax2.plot(np.round(std_ETPOS_PPP[52000:55000], 4))
-    ax3.plot(X_ETPOS[52000:55000], Y_ETPOS[52000:55000])
-    ax3.plot(X_PPP[52000:55000], Y_PPP[52000:55000])
+    #ax2.plot(np.round(std_ETPOS_PPP[52000:55000], 4))
+    ax3.plot(X_ETPOS, Y_ETPOS)
+    ax3.plot(X_PPP, Y_PPP)
     # print(np.mean(std_ETPOS_stand))
     fig.show()
     fig.savefig('Accurasy.png')
@@ -195,9 +195,15 @@ if __name__ == "__main__":
     """
     Per Helges kode test
     """
+    import pyproj
+    print(pyproj.datadir.get_user_data_dir())
+    from pyproj import Transformer, transform
+    import pandas as pd
     X_ref2 = 3149785.9652
     Y_ref2 = 598260.8822
     Z_ref2 = 5495348.4927
+    doy = pd.Period("2021-10-21", freq="H").day_of_year
     current_epoch = int(2021) + int(doy) / 365  # Current Epoch ex: 2021.45
-    transformer = Proj.from_crs(4936, 5972 )
-    X,Y,Z,epoch = transformer.transform( X_ref2, Y_ref2, Z_ref2, current_epoch)
+    transformer = Transformer.from_crs(7789, 5972)
+    X,Y,Z_UTM,epoch = transformer.transform(X_ref2, Y_ref2, Z_ref2, current_epoch)
+
