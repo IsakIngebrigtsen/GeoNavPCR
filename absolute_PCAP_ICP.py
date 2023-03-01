@@ -8,10 +8,12 @@ import copy
 import open3d as o3d
 
 
-def transformation(crs_from= 7912,crs_to=5972):
+def transform_mapprojection(crs_from=7912, crs_to=5972):
+    # Function transformes the code from the correct EPSG to euref89 utm32
     # https://epsg.io/7912 EPSG 7912 is ITRF14, lat lon, height
     # https://epsg.io/5972 ETRS89 / UTM zone 32N + NN2000 height
     # https://epsg.io/4937 ETRS89 with lat lon ellipsoid
+
     from pyproj import Transformer
     import pandas as pd
     dayofyear = pd.Period("2021-10-21", freq="H").day_of_year
@@ -19,7 +21,7 @@ def transformation(crs_from= 7912,crs_to=5972):
     return Transformer.from_crs(crs_from, crs_to), currentepoch
 
 
-def transform_pcap(pcap_raw, metadata, sbet_init=None, frame=None, geoid=0.0, fi=open("frame_7.txt", 'w')):
+def transform_pcap(pcap_raw, metadata, sbet_init=None, frame=None, fi=open("frame_7.txt", 'w')):
 
     import sys
     sys.path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot_lidar")
@@ -35,10 +37,10 @@ def transform_pcap(pcap_raw, metadata, sbet_init=None, frame=None, geoid=0.0, fi
     alt = position[frame].alt
     heading = position[frame].heading
 
-    transformer, current_epoch = transformation()
-    X_init, Y_init, Z_init, epoch_init = transformer.transform(lat, lon, alt, current_epoch)
-    import random
-    center_coord_utm32 = np.array([X_init, Y_init, Z_init])
+    pyproj, c_epoch = transform_mapprojection()
+    x_init, y_init, z_init, epoch_init = pyproj.transform(lat, lon, alt, c_epoch)
+
+    center_coord_utm32 = np.array([x_init, y_init, z_init])
     raw_pointcloud = get_frame(pcap_raw, metadata, frame)  # PCAP Software
 
     raw_pointcloud_correct_shape = raw_pointcloud.reshape((-1, 3))
@@ -49,8 +51,8 @@ def transform_pcap(pcap_raw, metadata, sbet_init=None, frame=None, geoid=0.0, fi
     pc_o3d = point_cloud_pros(point_cloud_prossesing)  # Point cloud porsessed by OPEN3ds sorftware
 
     pc_transformed_utm = copy.deepcopy(pc_o3d).translate(center_coord_utm32, relative=False)  # open3d
-    rotation = pc_transformed_utm.get_rotation_matrix_from_axis_angle(np.array([0, 0, quadrant(heading)]))  # Open3d
-    pc_transformed_utm.rotate(rotation, center=pc_transformed_utm.get_center())  # open3d
+    r = pc_transformed_utm.get_rotation_matrix_from_axis_angle(np.array([0, 0, quadrant(heading)]))  # Open3d
+    pc_transformed_utm.rotate(r, center=pc_transformed_utm.get_center())  # open3d
     return pc_transformed_utm, time_est, center_coord_utm32, heading
 
 
@@ -101,7 +103,7 @@ def initial_transform(init_source, init_target):
     target_trans = copy.deepcopy(init_target).translate(target_center_init, relative=False)
     voxeldown_source = source_trans.voxel_down_sample(voxel_size=0.5)
     voxeldown_target = target_trans.voxel_down_sample(voxel_size=0.5)
-    return voxeldown_source,source_trans,voxeldown_target, target_trans
+    return voxeldown_source, source_trans, voxeldown_target, target_trans
 
 
 def get_gps_week(pcap_path=None, pcap_filename=None):
@@ -136,7 +138,7 @@ def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_va
     return transformation
 
 
-def draw_las(pc_points, file_name):
+def draw_las(pc_points, las_file_name):
     # draw_las created by code from https://laspy.readthedocs.io/en/latest/examples.html
     my_data = np.asarray(pc_points)
 
@@ -152,7 +154,7 @@ def draw_las(pc_points, file_name):
     las.y = my_data[:, 1]
     las.z = my_data[:, 2]
 
-    las.write(file_name + ".las")
+    las.write(las_file_name + ".las")
 
 
 def filetype(filename, system="ETPOS"):
@@ -188,13 +190,13 @@ if __name__ == "__main__":
 
     # Inputs for the data
     voxel_size = 0.5  # means 5cm for this dataset
-    file_list = get_files(20, 1)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    file_list = get_files(17, 1)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
     accumulatedTime = 0.0
     startTime = time.perf_counter()
     geoid_height = 39.438
-    from_frame = 100
-    to_frame = 106
-    skips = 2
+    from_frame = 0
+    to_frame = 196
+    skips = 10
     sbet_prosess = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     # Empty Numpy arrays, that are being filled in the for loops below
     std = []
@@ -209,7 +211,7 @@ if __name__ == "__main__":
     long_track = []
     direction = []
 
-    #### Source NDH
+    # Source NDH
     # source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\NDH-Lillehammer.laz"
     # # Transformes the Laz file into Open 3d point cloud.
     # pc_raw_laz = read_laz(source_init)
@@ -248,14 +250,14 @@ if __name__ == "__main__":
         for k in range(from_frame, to_frame, skips):
             frame_index = k  # Collects frame
             with open("frame_7.txt", 'w') as f:  # Transforms PCAP files to Open 3d point clouds, in the correct heading and coordinatesystem
-                pc_transformed, time_sbet, coord, head = transform_pcap(pcap_file, meta, sbet_file, frame_index, geoid_height)
+                pc_transformed, time_sbet, coord, head = transform_pcap(pcap_file, meta, sbet_file, frame_index)
             timesteps.append(time_sbet)  # collects all timesteps
             target = pc_transformed
 
             saved_center = source.get_center()  # Saves center for later transformation.
 
             # Initial transform that translate down to local coordinateframe
-            downsampled_source, source_transformed,downsampled_target, target_transformed = initial_transform(source, target)
+            downsampled_source, source_transformed, downsampled_target, target_transformed = initial_transform(source, target)
             threshold = 1
 
             trans_init = np.identity(4)  # initial transformation matrix
@@ -265,7 +267,7 @@ if __name__ == "__main__":
             # At this point, both the target and the source are in a local coordinateframe
             trans_init = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9)  # Perform ICP on downsampled data
             trans_init = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1)  # Perform ICP on the whole dataset.
-            import draw_registration
+            # import draw_registration
 
             # source_for_plotting = source_transformed.voxel_down_sample(voxel_size=0.2)
             # draw_registration.draw_icp(source_for_plotting, target_transformed, trans_init)
@@ -273,25 +275,24 @@ if __name__ == "__main__":
             target_transformed.transform(trans_init)  # Final Transformation for the target point cloud
             trans_matrix.append(np.mean(trans_init))  # stores all transformation matrixes.
             # Below the Source and Target gets translated back to absolute coordinates. The reason for this is because of constraintes on Open 3d ICP algorithm
-            rotation = target_transformed.get_rotation_matrix_from_axis_angle(
-                np.array([0, 0, -quadrant(head)]))  # Open3d
-            target_transformed.rotate(rotation, center=target_transformed.get_center())  # open3d
+            # rotation = target_transformed.get_rotation_matrix_from_axis_angle(
+            #     np.array([0, 0, -quadrant(head)]))  # Open3d
+            # target_transformed.rotate(rotation, center=target_transformed.get_center())  # open3d
             source_ICP = copy.deepcopy(source_transformed).translate(saved_center, relative=False)
             target_ICP = copy.deepcopy(target_transformed).translate(target_transformed.get_center() + saved_center, relative=False)
             # Get sbet coord for a gived timestep
             referance_positon = sbet.get_position_sow(time_sbet)
-            heading = quadrant(referance_positon.heading)
-            direction.append(heading)
-            transformer, current_epoch = transformation()
+            true_heading = quadrant(referance_positon.heading)
+            direction.append(true_heading)
+            transformer, current_epoch = transform_mapprojection()
             X, Y, Z, epoch = transformer.transform(referance_positon.lat, referance_positon.lon,
                                                    referance_positon.alt, current_epoch)
             referance_coord = np.array([X, Y, Z])
             deviation = target_ICP.get_center() - referance_coord
-            cte,lte = c_l_track_error(referance_coord, target_ICP.get_center(), heading)
 
-            # To make sure that the time step is correct, The for loop below gives a timespam for point to find closest point to the True trajectory
-            """
-            for steps in np.arange(time_sbet-0.1, time_sbet+0.1, 0.1):
+            # To make sure that the time step is correct, The for loop below gives a timespam for point to find the closest point to the True trajectory
+
+            for steps in np.arange(time_sbet-0.2, time_sbet+0.2, 0.01):
                 temp_positon = sbet.get_position_sow(steps)
                 temp_coord = np.array([temp_positon.x, temp_positon.y, temp_positon.alt - geoid_height])
                 temp_std = target_ICP.get_center() - temp_coord
@@ -299,7 +300,7 @@ if __name__ == "__main__":
                 if np.sqrt(deviation[0]**2+deviation[1]**2) > np.sqrt(temp_std[0]**2+temp_std[1]**2):
                     referance_coord = temp_coord
                     deviation = temp_std
-            """
+            cte, lte = c_l_track_error(referance_coord, target_ICP.get_center(), true_heading)
             # Fill all numpy arrays with the correct variables for each iteration
             pre_activation = target.get_center() - referance_coord
             std.append(deviation)
@@ -374,7 +375,7 @@ if __name__ == "__main__":
     # Produce the true trajectory with a set Hz
     true_trajectory = []
     Hz = 10
-    transformer, current_epoch = transformation()
+    transformer, current_epoch = transform_mapprojection()
     for k in np.arange(min_time, max_time, 1/Hz):
         temp_positon = sbet.get_position_sow(k)
         X, Y, Z, epoch = transformer.transform(temp_positon.lat, temp_positon.lon,
@@ -399,7 +400,6 @@ if __name__ == "__main__":
     np.save(raw_filename, raw_coord)
     np.save(target_filename, target_coord)
 
-
     #%% Plot the data as subplots.
     import matplotlib.pyplot as plt
 
@@ -412,15 +412,16 @@ if __name__ == "__main__":
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
     fig.set_size_inches(30, 30, forward=True)
     line1 = f'Estimated deviation between the cars trajectory against the true trajectory'
-    line2 = f'Average distanse error is {np.round(average_distance_target,2)} m, and with the same timestamp: {np.round(np.mean(std[:,0:2]),2)} m'
+    std_dist = np.sqrt(std[:,0]**2+std[:,1]**2)
+    line2 = f'Average distanse error is {np.round(average_distance_target,2)} m, and with the same timestamp: {np.round(np.mean(std_dist),2)} m'
     line3 = f'Based on the files {file_list}'
     line4 = f'From frame {from_frame} to frame {to_frame} with {skips -1} skips'
     line5 = f'min deviation error is {np.round(np.min(nearest_referanced),3)} m and max:{np.round(np.max(nearest_referanced),3)}m'
     line6 = f'Target trajectory = trajectory after prosessing trough point cloud registration'
 
     fig.suptitle(line1 + '\n' + line2 + "\n" + line3 + "\n" + line4 + '\n' + line5 + '\n' + line6)
-    ax1.plot(target_coord[:, 0]- target_coord[0, 0], target_coord[:, 1]- target_coord[0, 1], color="green")
-    ax1.plot(true_trajectory[:, 0]-target_coord[0, 0], true_trajectory[:, 1]-target_coord[0, 1], color="red")
+    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1], color="green")
+    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1], color="red")
     ax1.set_title("Target trajectory against true trajectory", loc='center', wrap=True)
     ax1.grid()
     ax1.set_xlabel("East (m)")
@@ -445,8 +446,9 @@ if __name__ == "__main__":
 
     dev_x = target_coord[:, 0] - raw_coord[:, 0]
     dev_y = target_coord[:, 1] - raw_coord[:, 1]
-    ax3.plot(timesteps- timesteps[0], cross_track, '-bo', label="Cross Track Error")
-    ax3.plot(timesteps- timesteps[0], long_track, '-ko', label="Long track error")
+    x_time = np.asarray(timesteps) - np.asarray(timesteps[0])
+    ax3.plot(x_time, cross_track, '-bo', label="Cross Track Error")
+    ax3.plot(x_time, long_track, '-ko', label="Long track error")
     # ax3.scatter(timesteps,cross_track, color="blue", label ="Cross Track Error")
     # ax3.scatter(timesteps, long_track, color = "green",label = "long track error")
     ax3.set_xlabel("Frames")
@@ -456,8 +458,8 @@ if __name__ == "__main__":
     ax3.set_title("Cross track and long track error", loc='center', wrap=True)
     ax3.legend()
 
-    ax4.plot(nearest_raw, color="green")
-    ax4.plot(nearest_referanced, color="blue")
+    ax4.plot(x_time, nearest_raw, color="green")
+    ax4.plot(x_time, nearest_referanced, color="blue")
     from scipy import stats
     dev = np.sqrt(std[:, 0]**2+std[:, 1]**2)
     st = []
@@ -482,32 +484,32 @@ if __name__ == "__main__":
 
     # Subtract Start Time from The End Time
     total_time = end - start
-    total_time = np.round(total_time,4)
+    total_time = np.round(total_time, 4)
     print(f'Whoop im all done, I Have processed the files {file_list}, with the frames {from_frame} to {to_frame},with {skips} skips, and it took {total_time} seconds')
     print(f'Thats {np.round(total_time/60,2)} minutes or {np.round(total_time/(60*60),2)} hours')
-    # Save info file about the script thats run
+    # Save info file about the script that run
 
     file_name = 'info_script_' + time.strftime("%Y-%m-%d-%H%M") + '_from_file ' + file_list[0]+'.txt'
-    text_file = open('pros_data\\'+ file_name, "w")
-    n = text_file.write("\n")
+    text_file = open('pros_data\\' + file_name, "w")
+    text_file.write("\n")
     text_file.write(f'processed the file {file_list}, with the frames {from_frame} to {to_frame},with {skips} skips, and it took {total_time} seconds\n')
     text_file.write(f'Thats {np.round(total_time/60,2)} minutes or {np.round(total_time/(60*60),2)} hours\n')
     text_file.write(line1)
-    n = text_file.write("\n")
+    text_file.write("\n")
     text_file.write(line2)
-    n = text_file.write("\n")
+    text_file.write("\n")
     text_file.write(line3)
-    n = text_file.write("\n")
+    text_file.write("\n")
     text_file.write(line4)
-    n = text_file.write("\n")
+    text_file.write("\n")
     text_file.write(line5)
-    n = text_file.write("\n")
+    text_file.write("\n")
     text_file.write('True trajectory filename: ' + true_filename)
-    n = text_file.write("\n")
+    text_file.write("\n")
     text_file.write('SBET trajectory filename, that match with timestamps: ' + sbet_filename)
-    n = text_file.write("\n")
+    text_file.write("\n")
     text_file.write('PPP trajectory filename: ' + raw_filename)
-    n = text_file.write("\n")
+    text_file.write("\n")
     text_file.write('Georefferenced processed Target filename: ' + target_filename)
-    n = text_file.write("\n")
+    text_file.write("\n")
     text_file.close()

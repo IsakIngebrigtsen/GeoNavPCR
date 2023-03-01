@@ -10,6 +10,7 @@ def c_l_track_error(p1, p2, heading):
 
     # Normalize the vector
     v_norm = np.linalg.norm(v)
+    # From grunnleggende landmåling
 
     tg = (p2[0]-p1[0])/(p2[1]-p1[1])
     """
@@ -24,12 +25,10 @@ def c_l_track_error(p1, p2, heading):
     # w = np.cross(v_norm, np.array([0, 0, 1]))
     # print(f'test{w} stop TEEEEST')
     # Calculate the cross-track error
-    cte = np.sin(tg) * v_norm
-    lte = np.cos(heading) * v_norm
+    cte = np.sin(tg-np.pi+heading) * v_norm
+    lte = np.cos(tg-np.pi+heading) * v_norm
 
-    return cte,lte
-
-
+    return cte, lte
 
 if __name__ == "__main__":
 
@@ -39,6 +38,10 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     transformer = Proj.from_crs(4326, 5972)
     import matplotlib.pyplot as plt
+
+
+
+
 
     sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
     smrmsg = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032-smrmsg.out"

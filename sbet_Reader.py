@@ -163,11 +163,8 @@ if __name__ == "__main__":
     #plt.plot(std_ETPOS_PPP, color = "blue")
     #print(np.mean(std_ETPOS_PPP))
 
-    fig, (ax1,ax2,ax3) = plt.subplots(3, 1,facecolor="#5539cc")
+    fig, (ax1) = plt.subplots(1, 1)
     fig.set_size_inches(30, 30, forward=True)
-    ax1.set_facecolor("#6fc276")
-    ax2.set_facecolor("#6fc276")
-    ax3.set_facecolor("#6fc276")
     ax1.plot(smrmsg_np_ETPOS["alt-std"], color="blue", linewidth=0.4)
     ax1.plot(smrmsg_np_ETPOS["lat-std"], color="green", linewidth=0.4)
     ax1.plot(smrmsg_np_ETPOS["lon-std"], color="red", linewidth=0.4)
@@ -175,6 +172,7 @@ if __name__ == "__main__":
 
     # ax1.plot(X_stand, Y_stand)
     #ax2.plot(np.round(std_ETPOS_PPP[52000:55000], 4))
+    """
     ax3.plot(X_ETPOS, Y_ETPOS)
     ax3.plot(X_PPP, Y_PPP)
     # print(np.mean(std_ETPOS_stand))
@@ -194,6 +192,7 @@ if __name__ == "__main__":
 
     """
     Per Helges kode test
+    """
     """
     import pyproj
     print(pyproj.datadir.get_user_data_dir())
@@ -215,4 +214,4 @@ if __name__ == "__main__":
     X_89,Y_89,Z_89, epoch = transformer.transform(EUREF89[0], EUREF89[1], EUREF89[2], current_epoch)
 
     res = np.array([X_84, Y_84, Z_84]) - np.array([X_89,Y_89,Z_89])
-
+    """
