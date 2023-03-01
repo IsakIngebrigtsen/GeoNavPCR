@@ -112,8 +112,8 @@ def read_sbet(sbet_filename, smrmsg) -> np.array:
 
 
 if __name__ == "__main__":
-    from pyproj import Proj
-    transformer = Proj.from_crs(4326, 5972)
+    from pyproj import Transformer
+    transformer = Transformer.from_crs(4937, 5972)
     import matplotlib.pyplot as plt
 
     sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     doy = pd.Period("2021-10-21", freq="H").day_of_year
     current_epoch = int(2021) + int(doy)/365  # Current Epoch ex: 2021.45
     current_epoch = [current_epoch for k in range(sbet_np_PPP['lat'].size)]
-    transformer = Proj.from_crs(9000, 5972)
+    transformer = Transformer.from_crs(4326, 5972)
     X_PPP, Y_PPP, Z_PPP, epoch = transformer.transform(sbet_np_PPP['lat'], sbet_np_PPP['lon'], sbet_np_PPP['alt'], current_epoch)
     X_stand, Y_stand = transformer.transform(sbet_np_stand['lat'], sbet_np_stand['lon'])
 
@@ -204,6 +204,15 @@ if __name__ == "__main__":
     Z_ref2 = 5495348.4927
     doy = pd.Period("2021-10-21", freq="H").day_of_year
     current_epoch = int(2021) + int(doy) / 365  # Current Epoch ex: 2021.45
-    transformer = Transformer.from_crs(7789, 5972)
-    X,Y,Z_UTM,epoch = transformer.transform(X_ref2, Y_ref2, Z_ref2, current_epoch)
+    transformer = Transformer.from_crs(4936, 25832)
+    X,Y,Z_UTM, epoch = transformer.transform(X_ref2, Y_ref2, Z_ref2, current_epoch)
+
+    WGS84 = [sbet_np_PPP['lat'][0], sbet_np_PPP['lon'][0], sbet_np_PPP['alt'][0]]
+    transformer = Transformer.from_crs(7912, 25832)
+    X_84,Y_84,Z_84, epoch = transformer.transform(WGS84[0], WGS84[1], WGS84[2], current_epoch)
+    EUREF89 = [sbet_np_PPP['lat'][0], sbet_np_PPP['lon'][0], sbet_np_PPP['alt'][0]]
+    transformer = Transformer.from_crs(4258, 25832)
+    X_89,Y_89,Z_89, epoch = transformer.transform(EUREF89[0], EUREF89[1], EUREF89[2], current_epoch)
+
+    res = np.array([X_84, Y_84, Z_84]) - np.array([X_89,Y_89,Z_89])
 

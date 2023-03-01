@@ -1,7 +1,7 @@
 import numpy as np
 import copy
 import time
-from ICP_Point import draw_registration_result, draw_icp
+from draw_registration import draw_registration_result, draw_icp
 import absolute_PCAP_ICP as Pr
 from collect_filename import get_files
 

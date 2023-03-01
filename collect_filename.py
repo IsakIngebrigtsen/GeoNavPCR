@@ -22,8 +22,14 @@ def get_files(from_file_number = 2, number_of_files = 1):
 
 if __name__ == "__main__":
 
-    file_name = get_files(9, 10)
+    from absolute_PCAP_ICP import read_laz
+    file_name = get_files(1, 43)
 
+    for files in file_name:  # For loop that goes through the PCAP files, and the corresponding laz files.
+        # Source_init is the raw laz file corresponding to the PCAP file
+        source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\1024x10_20211021_" + files + ".laz"
+        # Transformes the Laz file into Open 3d point cloud.
+        pc_raw_laz = read_laz(source_init)
 
 
 

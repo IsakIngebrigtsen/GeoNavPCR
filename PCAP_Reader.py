@@ -175,7 +175,7 @@ if __name__ == "__main__":
     import pyproj
     import copy
     import time
-    from ICP_Point import draw_registration_result, draw_icp
+    from draw_registration import draw_registration_result, draw_icp
     voxel_size = 0.5  # means 5cm for this dataset
     source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\1024x10_20211021_195836.laz"
     target_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\1024x10_20211021_200226.laz"

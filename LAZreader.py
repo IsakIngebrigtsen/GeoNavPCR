@@ -7,7 +7,7 @@ import numpy as np
 import copy
 import time
 import matplotlib.pyplot as plt
-import ICP_Point as ICP
+import draw_registration as ICP
 
 def preprocess_point_cloud(pcd, voxel_size):
     print(":: Downsample with a voxel size %.3f." % voxel_size)
