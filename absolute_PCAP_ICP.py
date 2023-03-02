@@ -8,7 +8,7 @@ import copy
 import open3d as o3d
 
 
-def transform_mapprojection(crs_from=7912, crs_to=5972):
+def transform_mapprojection(crs_from=4937, crs_to=5972):
     # Function transformes the code from the correct EPSG to euref89 utm32
     # https://epsg.io/7912 EPSG 7912 is ITRF14, lat lon, height
     # https://epsg.io/5972 ETRS89 / UTM zone 32N + NN2000 height

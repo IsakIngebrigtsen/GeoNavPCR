@@ -116,17 +116,18 @@ if __name__ == "__main__":
     transformer = Transformer.from_crs(4937, 5972)
     import matplotlib.pyplot as plt
 
-    sbet_filename = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
-    smrmsg = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84-smrmsg.out"
-    sbet_filename_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\sbet-output-UTC-1000.out"
-    smrmsg_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\sbet-output-UTC-1000-smrmsg.out"
+    sbet_ETPOS = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
+    smrmsg_ETPOS = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032-smrmsg.out"
+    sbet_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-LC_PPP - SBS-EUREF89-UTC-Lidar-10Hz-1.743 0.044 -0.032.out"
+    smrmsg_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-LC_PPP - SBS-EUREF89-UTC-Lidar-10Hz-1.743 0.044 -0.032-smrmsg.out"
     smrmsg_stand = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Standalone-LAZ\\sbet-UTCtime-211021-Lillehammer-standalone-RT - PPP-WGS84-smrmsg.out"
     sbet_filename_stand = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Standalone-LAZ\\sbet-UTCtime-211021-Lillehammer-standalone-RT - PPP-WGS84.out"
 
     FROM_CRS = 4326 #WGS84
     TO_CRS =  25832 #UTM32
-    sbet_np_ETPOS, smrmsg_np_ETPOS  =read_sbet(sbet_filename, smrmsg)
-    sbet_np_PPP, smrmsg_np_PPP  =read_sbet(sbet_filename_PPP, smrmsg_PPP)
+    sbet_np_ETPOS, smrmsg_np_ETPOS  =read_sbet(sbet_ETPOS, smrmsg_ETPOS)
+    sbet_np_PPP, smrmsg_np_PPP  =read_sbet(sbet_PPP, smrmsg_PPP)
+
     sbet_np_stand, smrmsg_np_stand = read_sbet(sbet_filename_stand, smrmsg_stand)
     # lat = np.mean(smrmsg_np["lat-std"])
     # lon = np.mean(smrmsg_np["lon-std"])
@@ -143,75 +144,25 @@ if __name__ == "__main__":
     sbet_np_PPP['lon'] = sbet_np_PPP['lon'] * 180 / np.pi
     sbet_np_stand['lat'] = sbet_np_stand['lat'] * 180 / np.pi
     sbet_np_stand['lon'] = sbet_np_stand['lon'] * 180 / np.pi
-    X_ETPOS, Y_ETPOS,Z_ETPOS = transformer.transform(sbet_np_ETPOS['lat'],sbet_np_ETPOS['lon'],sbet_np_ETPOS['alt'])
-
-    import pandas as pd
     doy = pd.Period("2021-10-21", freq="H").day_of_year
-    current_epoch = int(2021) + int(doy)/365  # Current Epoch ex: 2021.45
-    current_epoch = [current_epoch for k in range(sbet_np_PPP['lat'].size)]
-    transformer = Transformer.from_crs(4326, 5972)
-    X_PPP, Y_PPP, Z_PPP, epoch = transformer.transform(sbet_np_PPP['lat'], sbet_np_PPP['lon'], sbet_np_PPP['alt'], current_epoch)
-    X_stand, Y_stand = transformer.transform(sbet_np_stand['lat'], sbet_np_stand['lon'])
+    epoch = int(2021) + int(doy) / 365  # Current Epoch ex: 2021.45
+    current_epoch = [epoch for k in range(sbet_np_ETPOS['lat'].size)]
+    current_epoch = [epoch] * sbet_np_ETPOS['lat'].size
+    transformer = Transformer.from_crs(4937, 5972)
 
-    # #std_ETPOS_PPP = np.sqrt((X_PPP-X_ETPOS)**2 + (Y_PPP-Y_ETPOS)**2)
-    # av = []
-    # for test in std_ETPOS_PPP:
-    #     if test > 1.0:
-    #         test = np.mean(av)
-    #     av.append(test)
-    # std_ETPOS_stand = np.sqrt((X_stand-X_ETPOS)**2 + (Y_stand-Y_ETPOS)**2)
-    #plt.plot(std_ETPOS_PPP, color = "blue")
-    #print(np.mean(std_ETPOS_PPP))
+    X_ETPOS_ITRF14, Y_ETPOS_ITRF14,Z_ETPOS_ITRF14,epoch = transformer.transform(sbet_np_ETPOS['lat'],sbet_np_ETPOS['lon'],sbet_np_ETPOS['alt'],current_epoch)
 
-    fig, (ax1) = plt.subplots(1, 1)
-    fig.set_size_inches(30, 30, forward=True)
-    ax1.plot(smrmsg_np_ETPOS["alt-std"], color="blue", linewidth=0.4)
-    ax1.plot(smrmsg_np_ETPOS["lat-std"], color="green", linewidth=0.4)
-    ax1.plot(smrmsg_np_ETPOS["lon-std"], color="red", linewidth=0.4)
+    epoch = int(2021) + int(doy) / 365  # Current Epoch ex: 2021.45
+    current_epoch = [epoch for k in range(sbet_np_ETPOS['lat'].size)]
+    current_epoch = [epoch] * sbet_np_PPP['lat'].size
+    transformer = Transformer.from_crs(7912, 5972)
+    X_PPP_ITRF14, Y_PPP_ITRF14, Z_PPP_ITRF14, epoch = transformer.transform(sbet_np_PPP['lat'], sbet_np_PPP['lon'], sbet_np_PPP['alt'], current_epoch)
+    PPP_trajectory_ITRF14 = np.array([X_PPP_ITRF14, Y_PPP_ITRF14, Z_PPP_ITRF14]).T
+    ETPOS_trajectory_ITRF14 = np.array([X_ETPOS_ITRF14, Y_ETPOS_ITRF14, Z_ETPOS_ITRF14]).T
+    st = ETPOS_trajectory_ITRF14 - PPP_trajectory_ITRF14
+    Y = ETPOS_trajectory_ITRF14 - PPP_trajectory_ITRF14
+    print(np.mean(np.sqrt(st[:,0]**2+st[:,1]**2)))
 
-
-    # ax1.plot(X_stand, Y_stand)
-    #ax2.plot(np.round(std_ETPOS_PPP[52000:55000], 4))
-    """
-    ax3.plot(X_ETPOS, Y_ETPOS)
-    ax3.plot(X_PPP, Y_PPP)
-    # print(np.mean(std_ETPOS_stand))
-    fig.show()
-    fig.savefig('Accurasy.png')
-
-    # """
-    # from pandas_geojson import to_geojson, write_geojson
-    # import pandas as pd
-    # latlon = {'lat':sbet_np_ETPOS['lat'], 'lon': sbet_np_ETPOS['lon']}
-    # data = pd.DataFrame(latlon)
-    # #data = pd.read_csv('Test.csv')
-    # geo_json = to_geojson(df=data, lat='lat', lon='lon',
-    #                       properties=[])
-    # write_geojson(geo_json, filename='random.geojson', indent=4)
-    # """
-
-    """
-    Per Helges kode test
-    """
-    """
-    import pyproj
-    print(pyproj.datadir.get_user_data_dir())
-    from pyproj import Transformer, transform
-    import pandas as pd
-    X_ref2 = 3149785.9652
-    Y_ref2 = 598260.8822
-    Z_ref2 = 5495348.4927
-    doy = pd.Period("2021-10-21", freq="H").day_of_year
-    current_epoch = int(2021) + int(doy) / 365  # Current Epoch ex: 2021.45
-    transformer = Transformer.from_crs(4936, 25832)
-    X,Y,Z_UTM, epoch = transformer.transform(X_ref2, Y_ref2, Z_ref2, current_epoch)
-
-    WGS84 = [sbet_np_PPP['lat'][0], sbet_np_PPP['lon'][0], sbet_np_PPP['alt'][0]]
-    transformer = Transformer.from_crs(7912, 25832)
-    X_84,Y_84,Z_84, epoch = transformer.transform(WGS84[0], WGS84[1], WGS84[2], current_epoch)
-    EUREF89 = [sbet_np_PPP['lat'][0], sbet_np_PPP['lon'][0], sbet_np_PPP['alt'][0]]
-    transformer = Transformer.from_crs(4258, 25832)
-    X_89,Y_89,Z_89, epoch = transformer.transform(EUREF89[0], EUREF89[1], EUREF89[2], current_epoch)
-
-    res = np.array([X_84, Y_84, Z_84]) - np.array([X_89,Y_89,Z_89])
-    """
+    np.save("pros_data\\PPP_traj_ITRF14.npy", PPP_trajectory_ITRF14)
+    np.save("pros_data\\ETPOS_trajectory_ITRF14.npy", ETPOS_trajectory_ITRF14)
+    print("whop done")
