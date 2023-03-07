@@ -22,5 +22,5 @@ for file in file_names:
     ims.append([im])
 
 ani = animation.ArtistAnimation(fig, ims, interval=200)
-ani.save('Gifs\\file_195032_196_after_georef_V2.gif', dpi=500)
+ani.save('Gifs\\file_195032_196_local_coordinates_03_06.gif', dpi=250)
 print("Im done :D")

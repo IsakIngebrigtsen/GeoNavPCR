@@ -82,9 +82,9 @@ def read_sbet(sbet_filename, smrmsg) -> np.array:
 
         ("time", np.float64),
 
-        ("lat-std", np.float64),  # radians
+        ("lat-std", np.float64),  # meter
 
-        ("lon-std", np.float64),  # radians
+        ("lon-std", np.float64),  # meter
 
         ("alt-std", np.float64), # sier noe om nøyaktigheten på fila. Punktskyen er direkte avledet av navigasjonen. 1-2 cm
 
@@ -163,6 +163,6 @@ if __name__ == "__main__":
     Y = ETPOS_trajectory_ITRF14 - PPP_trajectory_ITRF14
     print(np.mean(np.sqrt(st[:,0]**2+st[:,1]**2)))
 
-    np.save("pros_data\\PPP_traj_ITRF14.npy", PPP_trajectory_ITRF14)
-    np.save("pros_data\\ETPOS_trajectory_ITRF14.npy", ETPOS_trajectory_ITRF14)
+    # np.save("pros_data\\PPP_traj_ITRF14.npy", PPP_trajectory_ITRF14)
+    # np.save("pros_data\\ETPOS_trajectory_ITRF14.npy", ETPOS_trajectory_ITRF14)
     print("whop done")
