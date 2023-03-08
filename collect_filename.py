@@ -1,8 +1,13 @@
-def get_files(from_file_number = 2, number_of_files = 1):
+def get_files(from_file_number = 2, number_of_files = 1, folder = "ETPOS"):
     # Collects a number of files from the referance folder, max number of files are 44
     import os
-    folder = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-PCAP"
-    files = os.listdir(folder)
+    folder_ETPOS = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-PCAP"
+    folder_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-Standalone-PCAP"
+    if folder == "ETPOS":
+        folder_dir = folder_ETPOS
+    else:
+        folder_dir = folder_PPP
+    files = os.listdir(folder_dir)
     y = []
 
     for name in files:
@@ -30,6 +35,4 @@ if __name__ == "__main__":
         source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\1024x10_20211021_" + files + ".laz"
         # Transformes the Laz file into Open 3d point cloud.
         pc_raw_laz = read_laz(source_init)
-
-
 
