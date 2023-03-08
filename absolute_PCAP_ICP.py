@@ -11,57 +11,91 @@ import open3d as o3d
 
 
 def transform_mapprojection(crs_from=4937, crs_to=5972):
-    # Function transformes the code from the correct EPSG to euref89 utm32
-    # https://epsg.io/7912 EPSG 7912 is ITRF14, lat lon, height
-    # https://epsg.io/5972 ETRS89 / UTM zone 32N + NN2000 height
-    # https://epsg.io/4937 ETRS89 with lat lon ellipsoid
+    """Transforms the coordinates from the specified EPSG to EUREF89 UTM32.
+            https://epsg.io/7912 EPSG 7912 is ITRF14, lat lon, height
+            https://epsg.io/5972 ETRS89 / UTM zone 32N + NN2000 height
+            https://epsg.io/4937 ETRS89 with lat lon ellipsoid
+    Args:
+        crs_from (int, optional): The EPSG code of the original coordinate reference system. Defaults to 4937.
+        crs_to (int, optional): The EPSG code of the target coordinate reference system. Defaults to 5972.
 
+    Returns:
+        A tuple containing a pyproj.Transformer object for transforming coordinates from the original CRS to the target CRS
+        and the current epoch as a float, which is calculated using the day of year of October 21st in 2021.
+        as this is the day the user captured the data
+    """
     from pyproj import Transformer
-    import pandas as pd
-    dayofyear = pd.Period("2021-10-21", freq="H").day_of_year
+    import pandas
+    dayofyear = pandas.Period("2021-10-21", freq="H").day_of_year
     currentepoch = int(2021) + int(dayofyear) / 365  # Current Epoch ex: 2021.45
     return Transformer.from_crs(crs_from, crs_to), currentepoch
 
 
-def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, standalone=False):
+def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviation):
+    """
+    Transform a point cloud from a PCAP file to UTM32 coordinates and process it using Open3D.
 
+    Args:
+        pcap_raw (str): Path to the PCAP file.
+        metadata (str): Metadata associated with the PCAP file.
+        sbet_init (str): Path to the SBET file.
+        frame (int): The frame number of the point cloud to process.
+        init_pos (dict): Initial position of the lidar in latitude, longitude, altitude, and heading.
+        random_deviation (bool): If True, add a random deviation to the UTM coordinates.
+
+    Returns:
+        Tuple containing the transformed point cloud, the initial UTM32 coordinates, and the initial origin of the point cloud.
+
+    """
     import sys
+    import random
+    import numpy as np
+    import open3d as o3d
+
     sys.path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot_lidar")
     from teapot_lidar.pcapReader import PcapReader
-    pcap_reader = PcapReader(pcap_raw, metadata, sbet_path=sbet_init)  # Erlend Dahl Teapot
 
-    pyproj, c_epoch = transform_mapprojection(crs_from=7912)  # Transform PPP from itrf14 to Euref89
-    x_init, y_init, z_init, epoch_init = pyproj.transform(init_pos['lat'], init_pos['lon'], init_pos['alt'], c_epoch)
-    import random
-    random.seed(10)
-    if standalone is True:
-        random_deviation = random.uniform(-1.5, 1.5)
-    else:
-        random_deviation = 0
-    center_coord_utm32 = np.array([x_init + random_deviation, y_init + random_deviation, z_init])
+    # Create PcapReader object and remove vehicle and distance outside 40 meters.
+    pcap_process = PcapReader(pcap_raw, metadata, sbet_path=sbet_init)  # Erlend Dahl Teapot
     raw_pointcloud = get_frame(pcap_raw, metadata, frame)  # PCAP Software
-
     raw_pointcloud_correct_shape = raw_pointcloud.reshape((-1, 3))
-    # Removes the mobile mapping vehicle
-    point_cloud_prossesing = pcap_reader.remove_vehicle(raw_pointcloud_correct_shape)  # Erlend Dahl Teapot removes vehicle
-    # Remove all data outside of a 40 meters radius.
-    point_cloud_prossesing = pcap_reader.remove_outside_distance(40, point_cloud_prossesing)  # Erlend Dahl Teapot
+    point_cloud_prossesing = pcap_process.remove_vehicle(raw_pointcloud_correct_shape)  # Erlend Dahl Teapot removes vehicle
+    point_cloud_prossesing = pcap_process.remove_outside_distance(40, point_cloud_prossesing)  # Erlend Dahl Teapot
 
-    pc_o3d = point_cloud_pros(point_cloud_prossesing)  # Point cloud porsessed by OPEN3ds sorftware
-    # origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1, origin=(0,0,0))
+    # Process point cloud data with Open3D
+    pc_o3d = point_cloud_pros(point_cloud_prossesing)
     r = pc_o3d.get_rotation_matrix_from_xyz((0, 0, quadrant(init_pos['heading'])))  # Open3d
     pc_o3d.rotate(r, center=(0, 0, 0))  # open3d
     initial_origin = pc_o3d.get_center()
     pc_o3d = pc_o3d.translate([0, 0, 0], relative=False)  # open3d
 
+    # Apply UTM transformation
+    pyproj, c_epoch = transform_mapprojection(crs_from=7912)  # Transform PPP from itrf14 to Euref89
+    x_init, y_init, z_init, epoch_init = pyproj.transform(init_pos['lat'], init_pos['lon'], init_pos['alt'], c_epoch)
+    if random_deviation is True:
+        random_deviation = random.uniform(-1.5, 1.5)
+    else:
+        random_deviation = 0
+    center_coord_utm32 = np.array([x_init + random_deviation, y_init + random_deviation, z_init])
     pc_transformed_utm = pc_o3d.translate(center_coord_utm32, relative=False)  # open3d
 
     return pc_transformed_utm, center_coord_utm32, initial_origin
 
 
 def get_frame(pcap_raw, metadata, frame):
+    """
+    Extracts a specific frame from a LIDAR data source stored in a PCAP file.
+    Code collected by Erlend Dahl Teapot
+    Args:
+        pcap_raw (str): Path to the PCAP file.
+        metadata (str): Path to the JSON metadata file.
+        frame (int): The frame number to extract.
+
+    Returns:
+        numpy.ndarray: The point cloud data for the specified frame.
+    """
+
     # Read the metadata from the JSON file.
-    # Code collected by Erlend Dahl Teapot
     with open(metadata, 'r') as read:
         metadata = client.SensorInfo(read.read())
 
@@ -71,24 +105,50 @@ def get_frame(pcap_raw, metadata, frame):
     # Read the xth frame
     with closing(client.Scans(lidar_data)) as scans:
         scan = nth(scans, frame)
+
     # Create a function that translates coordinates to a plottable coordinate system
     xyzlut = client.XYZLut(lidar_data.metadata)
-    pc_nparray = xyzlut(scan)  # Transform point cloud to numpy array.
+
+    # Transform point cloud to numpy array.
+    pc_nparray = xyzlut(scan)
+
     return pc_nparray
 
 
 def point_cloud_pros(xyz):
+    """
+    Convert point cloud data into Open3D point cloud format and estimate normals.
+
+    Args:
+    xyz (numpy.ndarray): point cloud data in numpy array format with shape (-1, 3)
+
+    Returns:
+    open3d.geometry.PointCloud: point cloud data in Open3D point cloud format with normals estimated
+    """
+
     import open3d as o3
-    # Process the point cloud data, so that it comes in a standardised format from open 3d.
-    xyz = xyz.reshape((-1, 3))  # puts the point cloud on the correct xyz(numpy array) format
-    pc_o3d = o3.geometry.PointCloud(o3.utility.Vector3dVector(xyz))  # Makes point cloud in open3d format
+    # Reshape the point cloud data to the correct xyz (numpy array) format.
+    xyz = xyz.reshape((-1, 3))
+
+    # Convert the point cloud data to Open3D point cloud format.
+    pc_o3d = o3.geometry.PointCloud(o3.utility.Vector3dVector(xyz))
+
+    # Estimate normals of the point cloud.
     pc_o3d.estimate_normals(search_param=o3.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))  # Estimates the normals
 
     return pc_o3d
 
 
 def quadrant(alpha):
-    # Since the heading from the sbet files is not consistent with the quadrant. This code sets the heading in the right direction
+    """
+    Calculates the correct heading direction given the SBET heading value.
+
+    Args:
+    - alpha (float): The SBET heading value.
+
+    Returns:
+    - float: The heading direction in radians.
+    """
     alpha = alpha - np.pi/2
     if alpha < 0:
         return np.absolute(alpha)
@@ -97,7 +157,23 @@ def quadrant(alpha):
 
 
 def initial_transform(init_source, init_target, center_coord_utm32):
-    # initial center for the source point cloud. subtract this to get local plottable coordinates.
+    """
+    Performs transformation of point clouds to a local coordinate system and returns transformed point clouds.
+
+    Args:
+        init_source (open3d.geometry.PointCloud): Initial source point cloud.
+        init_target (open3d.geometry.PointCloud): Initial target point cloud.
+        center_coord_utm32 (ndarray): UTM coordinate for the center of the point cloud.
+
+    Returns:
+        tuple: A tuple containing:
+            - voxeldown_source (open3d.geometry.PointCloud): Voxel downsampled source point cloud.
+            - source_trans (open3d.geometry.PointCloud): Transformed source point cloud.
+            - voxeldown_target (open3d.geometry.PointCloud): Voxel downsampled target point cloud.
+            - target_trans (open3d.geometry.PointCloud): Transformed target point cloud.
+            - target_center_init (numpy.ndarray): Initial target center.
+    """
+
     init_center = init_source.get_center()
     source_center_init = init_source.get_center() - init_center
     target_center_init = center_coord_utm32 - init_center
@@ -109,41 +185,69 @@ def initial_transform(init_source, init_target, center_coord_utm32):
     return voxeldown_source, source_trans, voxeldown_target, target_trans, target_center_init
 
 
-def get_gps_week(pcap_path=None, pcap_filename=None):
-    # Collects the filename2gpsweek from Erlend Dahl Teapot
-    import os
-    sys.path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot_lidar")
-    from teapot_lidar.sbetParser import filename2gpsweek
-    if pcap_path is not None:
-        pcap_filename = os.path.basename(pcap_path)
-    return filename2gpsweek(pcap_filename)
-
-
 def read_laz(laz_file):
-    # Reads laz files to xyz(numpy arrays) format
-    las = laspy.read(laz_file)
-    xyz = las.xyz
+    """
+    Read a laz file and convert it to a numpy array format.
+
+    Args:
+        laz_file (str): The path to the laz file.
+
+    Returns:
+        numpy.ndarray: The numpy array representation of the point cloud.
+    """
+    # Read laz file using laspy package
+    laz = laspy.read(laz_file)
+
+    # Extract xyz coordinates from laz object
+    xyz = laz.xyz
     return xyz
 
 
 def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_value=1):
-    # Runs Open3ds ICP engine, x number of iterations, and return the transformation matrix
+    """
+    Runs Open3D's ICP engine on the target and source point cloud and returns the transformation matrix.
+
+    Args:
+    - init_source (open3d.geometry.PointCloud): The source point cloud.
+    - init_target (open3d.geometry.PointCloud): The target point cloud.
+    - transformation (numpy.ndarray): The initial transformation matrix.
+    - iterations (int, optional): The number of ICP iterations to run. Defaults to 1.
+    - threshold_value (float, optional): The maximum correspondence distance threshold. Defaults to 1.
+
+    Returns:
+    - numpy.ndarray: The final transformation matrix.
+    """
+
+    # Run ICP for the specified number of iterations
     for i in range(iterations):
         reg_p2l = o3d.pipelines.registration.registration_icp(
             init_target, init_source, threshold_value, transformation,
             o3d.pipelines.registration.TransformationEstimationPointToPlane(),
             o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=100))
+
+        # Check for convergence
         if i > 1 and np.abs(np.mean(reg_p2l.transformation-transformation)) < 1e-16:
             transformation = reg_p2l.transformation
             break
+
         transformation = reg_p2l.transformation
+
     return transformation
 
 
 def draw_las(pc_points, las_file_name):
-    # draw_las created by code from https://laspy.readthedocs.io/en/latest/examples.html
-    my_data = np.asarray(pc_points)
+    """Create a LAS file from a point cloud.
+    draw_las created by code from https://laspy.readthedocs.io/en/latest/examples.html
+    Args:
+        pc_points (numpy array): Point cloud data in the form of a numpy array.
+        las_file_name (str): Name of the LAS file to be created.
 
+    Returns:
+        None
+
+    """
+    # Convert numpy array to laspy data format
+    my_data = np.asarray(pc_points)
     header = laspy.LasHeader(point_format=3, version="1.2")
     header.add_extra_dim(laspy.ExtraBytesParams(name="random", type=np.int32))
     header.offsets = np.min(my_data, axis=0)
@@ -160,7 +264,19 @@ def draw_las(pc_points, las_file_name):
 
 
 def filetype(filename, system="ETPOS"):
-    # Establishes which round of data is used, This is just made to shorten the code later.
+    """Returns paths for various raw data files based on filename and system type.
+
+    Args:
+        filename (str): The filename to use for creating the path.
+        system (str, optional): The type of system used to collect the data. Defaults to "ETPOS".
+
+    Returns:
+        Tuple[str, str, str]: A tuple of paths for the pcap_raw, metadata, and sbet_raw files.
+
+    Raises:
+        ValueError: If the system argument is not recognized.
+
+    """
     if system == "ETPOS":
         raw_file = "OS-1-128_992035000186_1024x10_20211021_" + filename
         pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-PCAP\\"
@@ -174,7 +290,11 @@ def filetype(filename, system="ETPOS"):
         sbet_raw = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84.out"
         pcap_raw = pathbase + raw_file + ".pcap"
         metadata = pathbase + raw_file + ".json"
-        return pcap_raw, metadata, sbet_raw
+    else:
+        # Raise an error if the system argument is not recognized.
+        raise ValueError(f"System {system} is not recognized.")
+
+    return pcap_raw, metadata, sbet_raw
 
 
 if __name__ == "__main__":
@@ -192,13 +312,13 @@ if __name__ == "__main__":
 
     # Inputs for the data
     voxel_size = 0.5  # means 5cm for this dataset
-    system_folder = "PPP"
-    file_list = get_files(11, 4, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    system_folder = "ETPOS"
+    file_list = get_files(1, 43, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
     accumulatedTime = 0.0
     startTime = time.perf_counter()
     geoid_height = 39.438
-    from_frame = 40
-    to_frame = 60
+    from_frame = 1
+    to_frame = 198
     skips = 5
     sbet_prosess = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     standalone = True
@@ -329,6 +449,20 @@ if __name__ == "__main__":
             target_ICP = copy.deepcopy(target_transformed).translate(target_ICP_center, relative=False)
 
             deviation = target_ICP_center - referance_coord
+            # To make sure that the time step is correct, The for loop below gives a timespam for point to find the closest point to the True trajectory
+
+            for steps in np.arange(initial_position['time_est']-0.2, initial_position['time_est']+0.2, 0.01):
+                transformer, current_epoch = transform_mapprojection()
+                temp_positon = sbet.get_position_sow(steps)
+                X, Y, Z, epoch = transformer.transform(temp_positon.lat, temp_positon.lon,
+                                                       temp_positon.alt, current_epoch)
+
+                temp_coord = np.array([X, Y, Z])
+                temp_std = target_ICP_center - temp_coord
+
+                if np.sqrt(deviation[0]**2+deviation[1]**2) > np.sqrt(temp_std[0]**2+temp_std[1]**2):
+                    referance_coord = temp_coord
+                    deviation = temp_std
 
             cte, lte = c_l_track_error(referance_coord, target_ICP_center, true_heading)
             # Fill all numpy arrays with the correct variables for each iteration
@@ -445,8 +579,8 @@ if __name__ == "__main__":
     x_time = np.asarray(timesteps) - np.asarray(timesteps[0])
     ax3.plot(x_time, cross_track, '-bo', label="Cross Track Error")
     ax3.plot(x_time, long_track, '-ko', label="Long track error")
-    ax3.scatter(x_time, cross_track, color="blue", label ="Cross Track Error")
-    ax3.scatter(x_time, long_track, color = "green",label = "long track error")
+    ax3.scatter(x_time, cross_track, color="blue", label="Cross Track Error")
+    ax3.scatter(x_time, long_track, color="green", label="long track error")
     ax3.set_xlabel("Frames")
     ax3.set_ylabel("Cross Track Error")
     ax3.axhline(y=0.0, color='r', linestyle='-')
