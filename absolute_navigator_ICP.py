@@ -304,7 +304,7 @@ if __name__ == "__main__":
     # Grab Currrent Time Before Running the Code
     start = time.time()
 
-    # Inputs for the data
+    # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
     system_folder = "PPP"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
     file_list = get_files(25, 2, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
