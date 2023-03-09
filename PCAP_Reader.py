@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
     source = pc_o3d_laz
     target = pc_o3d_Pcap
-    from absolute_PCAP_ICP import initial_transform
+    from absolute_navigator_ICP import initial_transform
     downsampled_source, source_transformed, downsampled_target, target_transformed = initial_transform(source, target)
 
     threshold = 1

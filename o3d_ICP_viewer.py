@@ -2,7 +2,7 @@ import numpy as np
 import copy
 import time
 from draw_registration import draw_registration_result, draw_icp
-import absolute_PCAP_ICP as Pr
+import absolute_navigator_ICP as Pr
 from collect_filename import get_files
 import open3d as o3d
 import draw_registration

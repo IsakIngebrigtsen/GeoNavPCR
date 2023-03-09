@@ -1,6 +1,7 @@
 
 import numpy as np
 
+
 def c_l_track_error(p1, p2, heading):
     # Create vectors for the two points
     # p1 and p2 are vectors in x,y,z
@@ -34,7 +35,7 @@ if __name__ == "__main__":
 
     from pyproj import Proj
     from sbet_Reader import read_sbet
-    from absolute_PCAP_ICP import quadrant
+    from absolute_navigator_ICP import quadrant
     import matplotlib.pyplot as plt
     transformer = Proj.from_crs(4326, 5972)
     import matplotlib.pyplot as plt

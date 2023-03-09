@@ -4,7 +4,7 @@ import laspy
 import os
 import numpy as np
 import time
-import absolute_PCAP_ICP as Pr
+import absolute_navigator_ICP as Pr
 from collect_filename import get_files
 file_list = get_files(1, 43)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
 full_pc = np.zeros(3)

@@ -2,7 +2,7 @@ import copy
 import numpy as np
 import open3d as o3
 from probreg import cpd
-import absolute_PCAP_ICP as Pr
+import absolute_navigator_ICP as Pr
 from collect_filename import get_files
 import time
 import numpy as np

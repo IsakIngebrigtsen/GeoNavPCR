@@ -155,7 +155,7 @@ if __name__ == "__main__":
     pathBase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-PCAP\\"
     pcap_file = pathBase + filename + ".pcap"
     meta = pathBase + filename + ".json"
-    from absolute_PCAP_ICP import get_frame
+    from absolute_navigator_ICP import get_frame
     accumulatedTime = 0.0
     startTime = time.perf_counter()
 
