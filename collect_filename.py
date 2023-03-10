@@ -33,7 +33,7 @@ def get_files(from_file_number=2, number_of_files=1, folder="ETPOS"):
 if __name__ == "__main__":
 
     from absolute_navigator_ICP import read_laz
-    file_name = get_files(1, 42, folder = "PPP")
+    file_name = get_files(0, 42, folder = "PPP")
 
     # for files in file_name:  # For loop that goes through the PCAP files, and the corresponding laz files.
         # Source_init is the raw laz file corresponding to the PCAP file

@@ -22,14 +22,14 @@ def c_l_track_error(p1, p2, heading):
 
     # From grunnleggende landmåling
     tg = (p2[0]-p1[0])/(p2[1]-p1[1])
-    """
+
     if p2[0]-p1[0] < 0 < p2[1]-p1[1]:
         tg = -tg + np.pi
     elif p2[0]-p1[0] < 0 and p2[1]-p1[1] < 0:
         tg = -tg + np.pi
     elif p2[1]-p1[1] < 0 < p2[0]-p1[0]:
         tg = -tg + 2*np.pi
-    """
+
     # Calculate the perpendicular vector from the starting point to the line connecting the two points
     # w = np.cross(v_norm, np.array([0, 0, 1]))
     # print(f'test{w} stop TEEEEST')
@@ -52,8 +52,9 @@ def root_mean_square(target_points,source_points):
     Returns:
         Tuple of three floats representing the RMS errors in the North, East, and altitude (up) directions, respectively.
     """
-    target_dict = {'Y': target_points[0],'X': target_points[1], 'alt': target_points[3]}
-    source_dict = {'Y': source_points[0], 'X': source_points[1], 'alt': source_points[3]}
+
+    target_dict = {'Y': target_points[:, 0],'X': target_points[:, 1], 'alt': target_points[:, 2]}
+    source_dict = {'Y': source_points[:, 0], 'X': source_points[:, 1], 'alt': source_points[:, 2]}
 
     rms_n = np.sqrt(np.mean(np.sum((target_dict['X']-source_dict['X'])**2)))
     rms_e = np.sqrt(np.mean(np.sum((target_dict['Y']-source_dict['Y'])**2)))
@@ -62,7 +63,7 @@ def root_mean_square(target_points,source_points):
     return rms_n, rms_e, rms_alt
 
 
-def standard_deviation(coord_1,coord_2):
+def standard_deviation(coord_1, coord_2):
     """
     Calculates the standard deviation of N, E, and altitude values between two sets of 3D coordinates.
 
@@ -90,10 +91,10 @@ if __name__ == "__main__":
 
     import numpy as np
 
-    target = np.load("pros_data\\target_coord_2023-03-09_0311.npy")
-    source = np.load("pros_data\\sbet_coord_2023-03-09_0311.npy")
-    init_target = np.load("pros_data\\raw_coord_2023-03-09_0311.npy")
-    rms_n_init, rms_e_init, rms_alt_init = root_mean_square(init_target,source)
+    target = np.load("pros_data\\target_coord_2023-03-10_1404.npy")
+    source = np.load("pros_data\\sbet_coord_2023-03-10_1404.npy")
+    init_target = np.load("pros_data\\raw_coord_2023-03-10_1404.npy")
+    rms_n_init, rms_e_init, rms_alt_init = root_mean_square(init_target,target)
     rms_n_target, rms_e_target, rms_alt_target = root_mean_square(target, source)
     print(f'Init target: {rms_n_init, rms_e_init, rms_alt_init}')
     print(f'target: {rms_n_target, rms_e_target, rms_alt_target}')

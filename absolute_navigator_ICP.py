@@ -22,7 +22,7 @@ def transform_mapprojection(crs_from=4937, crs_to=5972):
     return Transformer.from_crs(crs_from, crs_to), currentepoch
 
 
-def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviation):
+def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviation, crs_epsg):
     """
     Transform a point cloud from a PCAP file to UTM32 coordinates and process it using Open3D.
 
@@ -33,14 +33,13 @@ def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviat
         frame (int): The frame number of the point cloud to process.
         init_pos (dict): Initial position of the lidar in latitude, longitude, altitude, and heading.
         random_deviation (bool): If True, add a random deviation to the UTM coordinates.
-
+        crs_epsg (int): EPSG value for he initial transformation of initial coordinates
     Returns:
         Tuple containing the transformed point cloud, the initial UTM32 coordinates, and the initial origin of the point cloud.
 
     """
     from sys import path
-    from random import uniform
-    from numpy import array
+    from numpy import array, random
 
     path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot_lidar")
     from teapot_lidar.pcapReader import PcapReader
@@ -60,10 +59,11 @@ def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviat
     pc_o3d = pc_o3d.translate([0, 0, 0], relative=False)  # open3d
 
     # Apply UTM transformation
-    pyproj, c_epoch = transform_mapprojection(crs_from=7912)  # Transform PPP from itrf14 to Euref89
+    pyproj, c_epoch = transform_mapprojection(crs_from=crs_epsg)  # Transform PPP from itrf14 to Euref89
     x_init, y_init, z_init, epoch_init = pyproj.transform(init_pos['lat'], init_pos['lon'], init_pos['alt'], c_epoch)
     if random_deviation is True:
-        random_deviation = uniform(-1.5, 1.5)
+        # Put in a seed to get a consistent result.
+        random_deviation = random.normal(-1.5, 1.5)
     else:
         random_deviation = 0
     center_coord_utm32 = array([x_init + random_deviation, y_init + random_deviation, z_init])
@@ -198,7 +198,7 @@ def read_laz(laz_file):
     return xyz
 
 
-def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_value=1):
+def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_value=1, model="Point2Plane"):
     """
     Runs Open3D's ICP engine on the target and source point cloud and returns the transformation matrix.
 
@@ -208,26 +208,31 @@ def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_va
     - transformation (numpy.ndarray): The initial transformation matrix.
     - iterations (int, optional): The number of ICP iterations to run. Defaults to 1.
     - threshold_value (float, optional): The maximum correspondence distance threshold. Defaults to 1.
-
+    - model(str): The ICP algorithm used in the point cloud registration: either "Point2Plane" or "Point2Point"
     Returns:
     - numpy.ndarray: The final transformation matrix.
     """
+
     from open3d import pipelines
     # Run ICP for the specified number of iterations
+    convergence = pipelines.registration.ICPConvergenceCriteria(max_iteration=100)
+    if model == "Point2Point":
+        icp_algorithm = pipelines.registration.TransformationEstimationPointToPoint()
+    else:
+        icp_algorithm = pipelines.registration.TransformationEstimationPointToPlane()
+
     for i in range(iterations):
         reg_p2l = pipelines.registration.registration_icp(
-            init_target, init_source, threshold_value, transformation,
-            pipelines.registration.TransformationEstimationPointToPlane(),
-            pipelines.registration.ICPConvergenceCriteria(max_iteration=100))
-
+            init_target, init_source, threshold_value, transformation, icp_algorithm, convergence)
         # Check for convergence
         if i > 1 and np.abs(np.mean(reg_p2l.transformation-transformation)) < 1e-16:
             transformation = reg_p2l.transformation
+            inlier_rms = reg_p2l.inlier_rmse
             break
-
+        inlier_rms = reg_p2l.inlier_rmse
         transformation = reg_p2l.transformation
 
-    return transformation
+    return transformation, inlier_rms
 
 
 def draw_las(pc_points, las_file_name):
@@ -306,16 +311,18 @@ if __name__ == "__main__":
 
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
-    system_folder = "PPP"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
-    file_list = get_files(25, 2, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
-    from_frame = 1
-    to_frame = 198
-    skips = 3
-    sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
-    standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
+    system_folder = "ETPOS"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
+    file_list = get_files(5, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    from_frame = 120
+    to_frame = 124
+    skips = 1
+    sbet_process = "ETPOS"  # Choose between SBET_prosess "PPP" or "ETPOS"
+    standalone = False  # if True a 1.5 meters deviation is added to the sbet data.
     save_data = True
     print_point_cloud = False
     remove_outliers = False
+    algorithm = "Point2Plane"
+    seed = 1
     # Empty Numpy arrays, that are being filled in the for loops below
     std = []
     std_raw = []
@@ -348,23 +355,28 @@ if __name__ == "__main__":
     from teapot_lidar.pcapReader import PcapReader
     # Imports the True Trajectory from the SBET file
     from teapot_lidar.sbetParser import SbetParser
-    sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
-    sbet = SbetParser(sbet_ref)
+    true_trajectory_SBET = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
+    # sbet = SbetParser(true_trajectory_SBET)
 
     # initializes the Sbet file as ether the PPP og ETPOS file.
     sbet_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-LC_PPP - SBS-WGS84-UTC-Lidar-10Hz-1.743 0.044 -0.032.out"
     sbet_ETPOS = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
     if sbet_process == "PPP":  # chooses if PPP or ETPOS file is being used.
         initial_navigation_trajectory = sbet_PPP
+        EPSG = 7912
     else:
         initial_navigation_trajectory = sbet_ETPOS
-
+        EPSG = 4937
     for files in file_list:  # Iterate through the PCAP files to
 
         pcap_file, meta = filetype(files, system_folder)  # Collects the correct PCAP, and metadata for the corresponding PCAP file.
 
         # Iterate through all selected frames with the designated skips.
         for frame_index in range(from_frame, to_frame, skips):
+
+            # implment seed for each frame
+            seed += 1
+            np.random.seed(seed)
             start_frame = time.time()
 
             pcap_reader = PcapReader(pcap_file, meta, sbet_path=initial_navigation_trajectory)  # Erlend Dahl Teapot
@@ -372,7 +384,7 @@ if __name__ == "__main__":
             pcap_reader.print_info(printFunc=lambda l: fi.write(l + "\n"), frame_index=frame_index)  # Erlend Dahl Teapot
             position = pcap_reader.get_coordinates()  # Erlend Dahl Teapot
             if frame_index >= len(position)-1:
-                print('List index is out of range,PCAP file')
+                print('List index is out of range,PCAP file {}')
                 break
             # Collects the North, East, alt, and heading at a given frame Teapot
             initial_position = {'lat': position[frame_index].lat, 'lon': position[frame_index].lon,
@@ -380,33 +392,25 @@ if __name__ == "__main__":
                                 'heading': position[frame_index].heading}
 
             # with open("frame_7.txt", 'w') as f:  # Transforms PCAP files to Open 3d point clouds, in the correct heading and coordinatesystem
-            pc_transformed, init_coord, origo = transform_pcap(pcap_file, meta, initial_navigation_trajectory, frame_index, initial_position, standalone)
+            pc_transformed, init_coord, origo = transform_pcap(pcap_file, meta, initial_navigation_trajectory, frame_index, initial_position, standalone, EPSG)
             timesteps.append(initial_position['time_est'])  # collects all timesteps
-
-            # Get sbet coord for a gived timestep
-            referance_positon = sbet.get_position_sow(initial_position['time_est'])
-            true_heading = quadrant(referance_positon.heading)
-            direction.append(true_heading)
-            transformer, current_epoch = transform_mapprojection()
-            X, Y, Z, epoch = transformer.transform(referance_positon.lat, referance_positon.lon,
-                                                   referance_positon.alt, current_epoch)
-            referance_coord = np.array([X, Y, Z])
             target = pc_transformed
             initial_coordinate.append(init_coord)
 
             # Get source pc
             partial_radius = 50
 
-            points = source_pc_numpy[
-                (source_pc_numpy[:, 0] >= referance_coord[0] - partial_radius) & (
-                            source_pc_numpy[:, 0] <= referance_coord[0] + partial_radius) & (
-                        source_pc_numpy[:, 1] >= referance_coord[1] - partial_radius) & (
-                        source_pc_numpy[:, 1] <= referance_coord[1] + partial_radius)]  # Erlend Dahl
+            part_of_source_np = source_pc_numpy[
+                (source_pc_numpy[:, 0] >= init_coord[0] - partial_radius) & (
+                            source_pc_numpy[:, 0] <= init_coord[0] + partial_radius) & (
+                        source_pc_numpy[:, 1] >= init_coord[1] - partial_radius) & (
+                        source_pc_numpy[:, 1] <= init_coord[1] + partial_radius)]  # Erlend Dahl
             # If the source point cloud is empty this file is not in the dataset, and next file is collected
-            if points.size == 0:
+            if part_of_source_np.size == 0:
                 break
-            source = point_cloud_pros(points)
-
+            source = point_cloud_pros(part_of_source_np)
+            # Just to initialize a point cloud incase the first frame does not works
+            last_frame = source
             saved_center = source.get_center()  # Saves center for later transformation.
             # Initial transform that translate down to local coordinateframe
             downsampled_source, source_transformed, downsampled_target, target_transformed, target_center = initial_transform(source, target, init_coord)
@@ -414,10 +418,19 @@ if __name__ == "__main__":
 
             trans_init = np.identity(4)  # initial transformation matrix
 
-            trans_init = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9)  # Perform ICP on downsampled data
-            trans_init = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1)  # Perform ICP on the whole dataset.
-
+            trans_init, rmse = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9, model=algorithm)  # Perform ICP on downsampled data
+            trans_init, inlier_rmse = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1, model=algorithm)  # Perform ICP on the whole dataset.
+            print(f'inlier_RMSE :{inlier_rmse}')
+            """
+            if inlier_rmse > 0.3:
+                trans_init, inlier_rmse = o3d_icp(last_frame, downsampled_target, trans_init, iterations=9,
+                                                  model=algorithm)  # Perform ICP on downsampled data
+                trans_init, inlier_rmse = o3d_icp(last_frame, target_transformed, trans_init, iterations=1,
+                                                  model=algorithm)  # Perform ICP on downsampled data
+                print(f'inlier_RMSE :{inlier_rmse}')
+            """
             target_transformed.transform(trans_init)  # Final Transformation for the target point cloud
+            last_frame = target_transformed
             movement = trans_init[0:3, 3] - origo
             # As a controll to esatblish the
 
@@ -440,8 +453,23 @@ if __name__ == "__main__":
             # target_ICP_center = init_coord + movement
             target_ICP = copy.deepcopy(target_transformed).translate(target_ICP_center, relative=False)
 
-            deviation = target_ICP_center - referance_coord
-            # To make sure that the time step is correct, The for loop below gives a timespam for point to find the closest point to the True trajectory
+            # Get sbet coord for a gived timestep
+            pcap_reader_true = PcapReader(pcap_file, meta, sbet_path=true_trajectory_SBET)  # Erlend Dahl Teapot
+            fi = open("frame.txt", 'w')
+            pcap_reader_true.print_info(printFunc=lambda l: fi.write(l + "\n"), frame_index=frame_index)  # Erlend Dahl Teapot
+            true_coord = pcap_reader.get_coordinates()  # Erlend Dahl Teapot
+            # Collects the North, East, alt, and heading at a given frame Teapot
+            true_position = {'lat': true_coord[frame_index].lat, 'lon': true_coord[frame_index].lon,
+                             'time_est': true_coord[frame_index].sow, 'alt': true_coord[frame_index].alt,
+                             'heading': true_coord[frame_index].heading}
+            # true_coordinates_lat_lon = sbet.get_position_sow(initial_position['time_est'])
+            true_heading = quadrant(true_position['heading'])
+            direction.append(true_heading)
+            transformer, current_epoch = transform_mapprojection()
+            X_true, Y_true, Z_true, epoch = transformer.transform(true_position['lat'], true_position['lon'],
+                                                                  true_position['alt'], current_epoch)
+            true_coordinates_UTM = np.array([X_true, Y_true, Z_true])
+            deviation = target_ICP_center - true_coordinates_UTM
 
             # Remove outlisers, if the point cloud registration says to move more than 3 times the standard deviation
             # of the initial coordinate, the initial coordinate is initiates as the true coordinate.
@@ -452,27 +480,31 @@ if __name__ == "__main__":
                 elif dev_2d >= 4*0.5:
                     target_ICP_center = init_coord
 
-            cte, lte = c_l_track_error(referance_coord, target_ICP_center, true_heading)
-
-            for steps in np.arange(initial_position['time_est']-0.2, initial_position['time_est']+0.2, 0.01):
+            # To make sure that the time step is correct, The for loop below gives a timespam for point to find the closest point to the True trajectory
+            """
+            for steps in np.arange(initial_position['time_est']-1, initial_position['time_est']+1, 0.01):
                 transformer, current_epoch = transform_mapprojection()
                 temp_positon = sbet.get_position_sow(steps)
-                X, Y, Z, epoch = transformer.transform(temp_positon.lat, temp_positon.lon,
-                                                       temp_positon.alt, current_epoch)
+                X_true, Y_true, Z_true, epoch = transformer.transform(temp_positon.lat, temp_positon.lon,
+                                                                      temp_positon.alt, current_epoch)
 
-                temp_coord = np.array([X, Y, Z])
+                temp_coord = np.array([X_true, Y_true, Z_true])
                 temp_std = target_ICP_center - temp_coord
 
                 if np.sqrt(deviation[0]**2+deviation[1]**2) > np.sqrt(temp_std[0]**2+temp_std[1]**2):
-                    referance_coord = temp_coord
+                    true_coordinates_UTM = temp_coord
                     deviation = temp_std
+            """
+
+            deviation = target_ICP_center - true_coordinates_UTM
+            cte, lte = c_l_track_error(true_coordinates_UTM, target_ICP_center, true_heading)
 
             # Fill all numpy arrays with the correct variables for each iteration
-            pre_activation = init_coord - referance_coord
+            pre_activation = init_coord - true_coordinates_UTM
             std.append(deviation)
             std_raw.append(pre_activation)
             target_coord.append(target_ICP_center)
-            sbet_coord.append(referance_coord)
+            sbet_coord.append(true_coordinates_UTM)
             raw_coord.append(init_coord)
             cross_track.append(cte)
             long_track.append(lte)
@@ -498,20 +530,20 @@ if __name__ == "__main__":
     sys.path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot_lidar")
     from teapot_lidar.sbetParser import SbetParser
     # sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
-    sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
+    true_trajectory_SBET = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
 
     # sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84.out"
 
-    sbet = SbetParser(sbet_ref)
+    sbet = SbetParser(true_trajectory_SBET)
     # Produce the true trajectory with a set Hz
     true_trajectory = []
     Hz = 10
     transformer, current_epoch = transform_mapprojection()
     for k in np.arange(min_time, max_time, 1/Hz):
         temp_positon = sbet.get_position_sow(k)
-        X, Y, Z, epoch = transformer.transform(temp_positon.lat, temp_positon.lon,
-                                               temp_positon.alt, current_epoch)
-        temp_coord = np.array([X, Y, Z])
+        X_true, Y_true, Z_true, epoch = transformer.transform(temp_positon.lat, temp_positon.lon,
+                                                              temp_positon.alt, current_epoch)
+        temp_coord = np.array([X_true, Y_true, Z_true])
         true_trajectory.append(temp_coord)
 
     true_trajectory = np.reshape(true_trajectory, (-1, 3))
@@ -521,6 +553,12 @@ if __name__ == "__main__":
     nearest_raw, ii = tree.query(raw_coord[:, 0:2])
     nearest_referanced, jj = tree.query(target_coord[:, 0:2])
 
+    import Quality_Controll as qc
+
+    rms_n_init, rms_e_init, rms_alt_init = np.round(qc.root_mean_square(raw_coord, sbet_coord), 3)
+    rms_n_target, rms_e_target, rms_alt_target = np.round(qc.root_mean_square(target_coord, sbet_coord), 3)
+    rms_n_target_v_init, rms_e_target_v_init, rms_alt_target_v_init = np.round(qc.root_mean_square(raw_coord, target_coord), 3)
+
     #%% Plot the data as subplots.
     import matplotlib.pyplot as plt
 
@@ -529,7 +567,9 @@ if __name__ == "__main__":
     average_distance_before = np.mean(nearest_raw)
     print(f'average distanse wrong is {average_distance_target} m, and before the registration is it {average_distance_before} m')
     print(f'min deviation error is {np.min(nearest_referanced)} m and max:{np.max(nearest_referanced)}')
-
+    print(f'RMSE value for initial coordinates: {rms_n_init, rms_e_init, rms_alt_init}')
+    print(f'RMSE value for estimated coordinates after point cloud registration:\n {rms_n_target, rms_e_target, rms_alt_target}')
+    print(f'RMSE value for initial coordinates against estimated coordinates: {rms_n_target_v_init, rms_e_target_v_init, rms_alt_target_v_init}')
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
     fig.set_size_inches(30, 30, forward=True)
     line1 = f'Estimated deviation between the cars trajectory against the true trajectory'
