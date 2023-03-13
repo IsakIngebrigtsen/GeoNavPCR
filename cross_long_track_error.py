@@ -14,14 +14,14 @@ def c_l_track_error(p1, p2, heading):
     # From grunnleggende landmåling
 
     tg = (p2[0]-p1[0])/(p2[1]-p1[1])
-
+    """
     if p2[0]-p1[0] < 0 < p2[1]-p1[1]:
         tg = -tg + np.pi
     elif p2[0]-p1[0] < 0 and p2[1]-p1[1] < 0:
         tg = -tg + np.pi
     elif p2[1]-p1[1] < 0 < p2[0]-p1[0]:
         tg = -tg + 2*np.pi
-
+    """
 
     # Calculate the perpendicular vector from the starting point to the line connecting the two points
     # w = np.cross(v_norm, np.array([0, 0, 1]))

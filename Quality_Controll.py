@@ -56,9 +56,9 @@ def root_mean_square(target_points,source_points):
     target_dict = {'Y': target_points[:, 0],'X': target_points[:, 1], 'alt': target_points[:, 2]}
     source_dict = {'Y': source_points[:, 0], 'X': source_points[:, 1], 'alt': source_points[:, 2]}
 
-    rms_n = np.sqrt(np.mean(np.sum((target_dict['X']-source_dict['X'])**2)))
-    rms_e = np.sqrt(np.mean(np.sum((target_dict['Y']-source_dict['Y'])**2)))
-    rms_alt = np.sqrt(np.mean(np.sum((target_dict['alt']-source_dict['alt'])**2)))
+    rms_n = np.sqrt((np.sum((target_dict['X']-source_dict['X'])**2))/len(source_dict['X']))
+    rms_e = np.sqrt((np.sum((target_dict['Y']-source_dict['Y'])**2))/len(source_dict['X']))
+    rms_alt = np.sqrt((np.sum((target_dict['alt']-source_dict['alt'])**2))/len(source_dict['X']))
 
     return rms_n, rms_e, rms_alt
 
@@ -91,9 +91,9 @@ if __name__ == "__main__":
 
     import numpy as np
 
-    target = np.load("pros_data\\target_coord_2023-03-10_1404.npy")
-    source = np.load("pros_data\\sbet_coord_2023-03-10_1404.npy")
-    init_target = np.load("pros_data\\raw_coord_2023-03-10_1404.npy")
+    target = np.load("pros_data\\target_coord_2023-03-13_0644.npy")
+    source = np.load("pros_data\\sbet_coord_2023-03-13_0644.npy")
+    init_target = np.load("pros_data\\raw_coord_2023-03-13_0644.npy")
     rms_n_init, rms_e_init, rms_alt_init = root_mean_square(init_target,target)
     rms_n_target, rms_e_target, rms_alt_target = root_mean_square(target, source)
     print(f'Init target: {rms_n_init, rms_e_init, rms_alt_init}')

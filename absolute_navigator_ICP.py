@@ -33,7 +33,7 @@ def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviat
         frame (int): The frame number of the point cloud to process.
         init_pos (dict): Initial position of the lidar in latitude, longitude, altitude, and heading.
         random_deviation (bool): If True, add a random deviation to the UTM coordinates.
-        crs_epsg (int): EPSG value for he initial transformation of initial coordinates
+        crs_epsg (int): EPSG value for the initial transformation of initial coordinates
     Returns:
         Tuple containing the transformed point cloud, the initial UTM32 coordinates, and the initial origin of the point cloud.
 
@@ -227,12 +227,12 @@ def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_va
         # Check for convergence
         if i > 1 and np.abs(np.mean(reg_p2l.transformation-transformation)) < 1e-16:
             transformation = reg_p2l.transformation
-            inlier_rms = reg_p2l.inlier_rmse
-            break
-        inlier_rms = reg_p2l.inlier_rmse
-        transformation = reg_p2l.transformation
 
-    return transformation, inlier_rms
+            break
+
+        transformation, inlier = reg_p2l.transformation, reg_p2l.inlier_rmse
+
+    return transformation, inlier
 
 
 def draw_las(pc_points, las_file_name):
@@ -312,12 +312,12 @@ if __name__ == "__main__":
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
     system_folder = "ETPOS"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
-    file_list = get_files(5, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
-    from_frame = 120
-    to_frame = 124
-    skips = 1
-    sbet_process = "ETPOS"  # Choose between SBET_prosess "PPP" or "ETPOS"
-    standalone = False  # if True a 1.5 meters deviation is added to the sbet data.
+    file_list = get_files(1, 43, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    from_frame = 0
+    to_frame = 198
+    skips = 5
+    sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
+    standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
     save_data = True
     print_point_cloud = False
     remove_outliers = False
@@ -374,6 +374,9 @@ if __name__ == "__main__":
         # Iterate through all selected frames with the designated skips.
         for frame_index in range(from_frame, to_frame, skips):
 
+            # There is a "frame_shift between the sbet file and the point cloud it self.
+            # So frame_index_shift is implemented to get the right sbet frame
+            frame_index_shift = frame_index
             # implment seed for each frame
             seed += 1
             np.random.seed(seed)
@@ -383,13 +386,15 @@ if __name__ == "__main__":
             fi = open("frame.txt", 'w')
             pcap_reader.print_info(printFunc=lambda l: fi.write(l + "\n"), frame_index=frame_index)  # Erlend Dahl Teapot
             position = pcap_reader.get_coordinates()  # Erlend Dahl Teapot
-            if frame_index >= len(position)-1:
+            if frame_index >= len(position)-2:
                 print('List index is out of range,PCAP file {}')
                 break
+
+
             # Collects the North, East, alt, and heading at a given frame Teapot
-            initial_position = {'lat': position[frame_index].lat, 'lon': position[frame_index].lon,
-                                'time_est': position[frame_index].sow, 'alt': position[frame_index].alt,
-                                'heading': position[frame_index].heading}
+            initial_position = {'lat': position[frame_index_shift].lat, 'lon': position[frame_index_shift].lon,
+                                'time_est': position[frame_index_shift].sow, 'alt': position[frame_index_shift].alt,
+                                'heading': position[frame_index_shift].heading}
 
             # with open("frame_7.txt", 'w') as f:  # Transforms PCAP files to Open 3d point clouds, in the correct heading and coordinatesystem
             pc_transformed, init_coord, origo = transform_pcap(pcap_file, meta, initial_navigation_trajectory, frame_index, initial_position, standalone, EPSG)
@@ -409,7 +414,7 @@ if __name__ == "__main__":
             if part_of_source_np.size == 0:
                 break
             source = point_cloud_pros(part_of_source_np)
-            # Just to initialize a point cloud incase the first frame does not works
+            # Just to initialize a point cloud incase the first frame does not work
             last_frame = source
             saved_center = source.get_center()  # Saves center for later transformation.
             # Initial transform that translate down to local coordinateframe
@@ -428,9 +433,9 @@ if __name__ == "__main__":
                 trans_init, inlier_rmse = o3d_icp(last_frame, target_transformed, trans_init, iterations=1,
                                                   model=algorithm)  # Perform ICP on downsampled data
                 print(f'inlier_RMSE :{inlier_rmse}')
+            last_frame = target_transformed
             """
             target_transformed.transform(trans_init)  # Final Transformation for the target point cloud
-            last_frame = target_transformed
             movement = trans_init[0:3, 3] - origo
             # As a controll to esatblish the
 
@@ -457,15 +462,16 @@ if __name__ == "__main__":
             pcap_reader_true = PcapReader(pcap_file, meta, sbet_path=true_trajectory_SBET)  # Erlend Dahl Teapot
             fi = open("frame.txt", 'w')
             pcap_reader_true.print_info(printFunc=lambda l: fi.write(l + "\n"), frame_index=frame_index)  # Erlend Dahl Teapot
-            true_coord = pcap_reader.get_coordinates()  # Erlend Dahl Teapot
+            true_coord = pcap_reader_true.get_coordinates()  # Erlend Dahl Teapot
             # Collects the North, East, alt, and heading at a given frame Teapot
-            true_position = {'lat': true_coord[frame_index].lat, 'lon': true_coord[frame_index].lon,
-                             'time_est': true_coord[frame_index].sow, 'alt': true_coord[frame_index].alt,
-                             'heading': true_coord[frame_index].heading}
+
+            true_position = {'lat': true_coord[frame_index_shift].lat, 'lon': true_coord[frame_index_shift].lon,
+                             'time_est': true_coord[frame_index_shift].sow, 'alt': true_coord[frame_index_shift].alt,
+                             'heading': true_coord[frame_index_shift].heading}
             # true_coordinates_lat_lon = sbet.get_position_sow(initial_position['time_est'])
             true_heading = quadrant(true_position['heading'])
             direction.append(true_heading)
-            transformer, current_epoch = transform_mapprojection()
+            transformer, current_epoch = transform_mapprojection(crs_from=4937)
             X_true, Y_true, Z_true, epoch = transformer.transform(true_position['lat'], true_position['lon'],
                                                                   true_position['alt'], current_epoch)
             true_coordinates_UTM = np.array([X_true, Y_true, Z_true])
@@ -581,16 +587,16 @@ if __name__ == "__main__":
     line6 = f'Target trajectory = trajectory after prosessing trough point cloud registration'
 
     fig.suptitle(line1 + '\n' + line2 + "\n" + line3 + "\n" + line4 + '\n' + line5 + '\n' + line6)
-    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1], color="green")
-    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1], color="red")
+    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1], color='green')
+    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1],color = 'red')
     ax1.set_title("Target trajectory against true trajectory", loc='center', wrap=True)
     ax1.grid()
     ax1.set_xlabel("East (m)")
     ax1.set_ylabel("North (m)")
     ax1.legend(["Target trajectory", "True trajectory"])
 
-    ax2.plot(raw_coord[:, 0]-target_coord[0, 0], raw_coord[:, 1]-target_coord[0, 1], color="green")
-    ax2.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1], color="red")
+    ax2.plot(raw_coord[:, 0]-target_coord[0, 0], raw_coord[:, 1]-target_coord[0, 1], color='green')
+    ax2.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1], color='red')
     ax2.set_title("PPP trajectory against True trajectory", loc='center', wrap=True)
     ax2.grid()
     ax2.set_xlabel("East (m)")
