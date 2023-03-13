@@ -97,7 +97,8 @@ def get_frame(pcap_raw, metadata, frame):
 
     # Read the xth frame
     with closing(Scans(lidar_data)) as scans:
-        scan = nth(scans, frame)
+        # Frame -1 to get the correct frame from the pcap vs sbet file.
+        scan = nth(scans, frame - 1)
 
     # Create a function that translates coordinates to a plottable coordinate system
     xyzlut = XYZLut(lidar_data.metadata)
@@ -311,14 +312,14 @@ if __name__ == "__main__":
 
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
-    system_folder = "ETPOS"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
-    file_list = get_files(1, 43, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
-    from_frame = 0
-    to_frame = 198
-    skips = 5
+    system_folder = "PPP"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
+    file_list = get_files(9, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    from_frame = 1
+    to_frame = 20
+    skips = 1
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
-    standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
-    save_data = True
+    standalone = False  # if True a 1.5 meters deviation is added to the sbet data.
+    save_data = False
     print_point_cloud = False
     remove_outliers = False
     algorithm = "Point2Plane"
@@ -351,7 +352,7 @@ if __name__ == "__main__":
 
     # Imports data from TEAPOT project.
     import sys
-    sys.path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot_lidar")
+    sys.path.insert(0, "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\teapot_lidar")
     from teapot_lidar.pcapReader import PcapReader
     # Imports the True Trajectory from the SBET file
     from teapot_lidar.sbetParser import SbetParser
@@ -374,7 +375,7 @@ if __name__ == "__main__":
         # Iterate through all selected frames with the designated skips.
         for frame_index in range(from_frame, to_frame, skips):
 
-            # There is a "frame_shift between the sbet file and the point cloud it self.
+            # There is a frame_shift between the sbet file and the point cloud itself.
             # So frame_index_shift is implemented to get the right sbet frame
             frame_index_shift = frame_index
             # implment seed for each frame
@@ -383,13 +384,16 @@ if __name__ == "__main__":
             start_frame = time.time()
 
             pcap_reader = PcapReader(pcap_file, meta, sbet_path=initial_navigation_trajectory)  # Erlend Dahl Teapot
-            fi = open("frame.txt", 'w')
-            pcap_reader.print_info(printFunc=lambda l: fi.write(l + "\n"), frame_index=frame_index)  # Erlend Dahl Teapot
-            position = pcap_reader.get_coordinates()  # Erlend Dahl Teapot
+            original_stdout = sys.stdout  # Save a reference to the original standard output
+            with open("frame.txt", 'w') as f:
+                sys.stdout = f  # Change the standard output to the file we created.
+                pcap_reader.print_info(printFunc=print, frame_index=frame_index)  # Erlend Dahl Teapot
+                sys.stdout = original_stdout  # Save a reference to the original standard output
+            # Change the standard output to the file we created.
+            position = pcap_reader.get_coordinates(rotate=False)  # Erlend Dahl Teapot
             if frame_index >= len(position)-2:
                 print('List index is out of range,PCAP file {}')
                 break
-
 
             # Collects the North, East, alt, and heading at a given frame Teapot
             initial_position = {'lat': position[frame_index_shift].lat, 'lon': position[frame_index_shift].lon,
@@ -460,9 +464,11 @@ if __name__ == "__main__":
 
             # Get sbet coord for a gived timestep
             pcap_reader_true = PcapReader(pcap_file, meta, sbet_path=true_trajectory_SBET)  # Erlend Dahl Teapot
-            fi = open("frame.txt", 'w')
-            pcap_reader_true.print_info(printFunc=lambda l: fi.write(l + "\n"), frame_index=frame_index)  # Erlend Dahl Teapot
-            true_coord = pcap_reader_true.get_coordinates()  # Erlend Dahl Teapot
+            with open("frame.txt", 'w') as f:
+                sys.stdout = f  # Change the standard output to the file we created.
+                pcap_reader.print_info(printFunc=print, frame_index=frame_index)  # Erlend Dahl Teapot
+                sys.stdout = original_stdout  # Save a reference to the original standard output
+            true_coord = pcap_reader_true.get_coordinates(rotate=False)  # Erlend Dahl Teapot
             # Collects the North, East, alt, and heading at a given frame Teapot
 
             true_position = {'lat': true_coord[frame_index_shift].lat, 'lon': true_coord[frame_index_shift].lon,
@@ -542,6 +548,7 @@ if __name__ == "__main__":
 
     sbet = SbetParser(true_trajectory_SBET)
     # Produce the true trajectory with a set Hz
+    """
     true_trajectory = []
     Hz = 10
     transformer, current_epoch = transform_mapprojection()
@@ -551,11 +558,12 @@ if __name__ == "__main__":
                                                               temp_positon.alt, current_epoch)
         temp_coord = np.array([X_true, Y_true, Z_true])
         true_trajectory.append(temp_coord)
-
+    
     true_trajectory = np.reshape(true_trajectory, (-1, 3))
+    """
     # Use K nearest neighbour to find the shortest distance between the True trajectory and the target trajectory
     import scipy
-    tree = scipy.spatial.cKDTree(true_trajectory[:, 0:2])
+    tree = scipy.spatial.cKDTree(sbet_coord[:, 0:2])
     nearest_raw, ii = tree.query(raw_coord[:, 0:2])
     nearest_referanced, jj = tree.query(target_coord[:, 0:2])
 
@@ -587,8 +595,8 @@ if __name__ == "__main__":
     line6 = f'Target trajectory = trajectory after prosessing trough point cloud registration'
 
     fig.suptitle(line1 + '\n' + line2 + "\n" + line3 + "\n" + line4 + '\n' + line5 + '\n' + line6)
-    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1], color='green')
-    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1],color = 'red')
+    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1], '-bo')
+    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1], '-ko')
     ax1.set_title("Target trajectory against true trajectory", loc='center', wrap=True)
     ax1.grid()
     ax1.set_xlabel("East (m)")
@@ -658,7 +666,7 @@ if __name__ == "__main__":
         target_filename = 'pros_data\\target_coord_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
         heading_filename = 'pros_data\\heading_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
         np.save(heading_filename, direction)
-        np.save(true_filename, true_trajectory)
+        # np.save(true_filename, true_trajectory)
         np.save(sbet_filename, sbet_coord)
         np.save(raw_filename, raw_coord)
         np.save(target_filename, target_coord)
