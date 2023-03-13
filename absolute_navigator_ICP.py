@@ -313,9 +313,9 @@ if __name__ == "__main__":
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
     system_folder = "PPP"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
-    file_list = get_files(9, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    file_list = get_files(40, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
     from_frame = 1
-    to_frame = 20
+    to_frame = 5
     skips = 1
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     standalone = False  # if True a 1.5 meters deviation is added to the sbet data.
