@@ -324,6 +324,9 @@ if __name__ == "__main__":
     remove_outliers = False
     algorithm = "Point2Plane"
     seed = 1
+    import sys
+    # Path to teapot_lidar project. Code forked with the hash f1e8d6ba6d9a0003ecc4630a878518c3778dabf4
+    sys.path.insert(0, "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\teapot_lidar")
     # Empty Numpy arrays, that are being filled in the for loops below
     std = []
     std_raw = []
@@ -351,8 +354,6 @@ if __name__ == "__main__":
     partial_radius = 50
 
     # Imports data from TEAPOT project.
-    import sys
-    sys.path.insert(0, "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\teapot_lidar")
     from teapot_lidar.pcapReader import PcapReader
     # Imports the True Trajectory from the SBET file
     from teapot_lidar.sbetParser import SbetParser
