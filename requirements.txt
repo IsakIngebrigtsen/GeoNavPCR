@@ -1,0 +1,11 @@
+python==3.8.16
+numpy==1.23.5
+open3d==0.15.1
+laspy==2.3.0
+ouster-sdk[examples]==0.5.1
+pyproj==3.4.1
+pyproj sync --all
+pandas==1.4.4
+scipy==1.9.3
+matplotlib==3.5.2
+geopandas==0.12.2
