@@ -126,7 +126,7 @@ if __name__ == "__main__":
     FROM_CRS = 4326 #WGS84
     TO_CRS =  25832 #UTM32
     sbet_np_ETPOS, smrmsg_np_ETPOS  =read_sbet(sbet_ETPOS, smrmsg_ETPOS)
-    sbet_np_PPP, smrmsg_np_PPP  =read_sbet(sbet_PPP, smrmsg_PPP)
+    sbet_np_ETPOS, smrmsg_np_ETPOS  =read_sbet(sbet_PPP, smrmsg_PPP)
 
     sbet_np_stand, smrmsg_np_stand = read_sbet(sbet_filename_stand, smrmsg_stand)
     # lat = np.mean(smrmsg_np["lat-std"])
@@ -135,9 +135,25 @@ if __name__ == "__main__":
     # time = np.mean(smrmsg_np["time"])
     # print(lat,lon,alt,time)
     gpsweek = filename2gpsweek("C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-Standalone-PCAP\\OS-1-128_992035000186_1024x10_20211021_200041.pcap")
-    # plt.plot(sbet_np_ETPOS['lat'], sbet_np_ETPOS['lon'], color = "red")
-    # plt.plot(sbet_np_PPP['lat'], sbet_np_PPP['lon'], color = "blue")
+    mean_lat = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['lat-std']**2)/(len(smrmsg_np_ETPOS['lat-std'])-1)), 3)
+    mean_lon = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['lon-std']**2)/(len(smrmsg_np_ETPOS['lon-std'])-1)), 3)
+    mean_alt = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['alt-std']**2)/(len(smrmsg_np_ETPOS['alt-std'])-1)), 3)
+    plt.style.use('bmh')
+    fig, ax = plt.subplots(figsize=(20, 10))
+    # ax.set_facecolor('#eafff5')
+    ax.set_title('Position Std Dev(m), after processing with PPP')
+    ax.plot(smrmsg_np_ETPOS['time'], smrmsg_np_ETPOS['lat-std'], linewidth=0.2, label=f'Latitude std, mean:{mean_lat} m')
+    ax.plot(smrmsg_np_ETPOS['time'], smrmsg_np_ETPOS['lon-std'], linewidth=0.2, label=f'longitude std, mean:{mean_lon} m ')
+    ax.plot(smrmsg_np_ETPOS['time'], smrmsg_np_ETPOS['alt-std'], linewidth=0.2, label=f'altitude std, mean:{mean_alt} m')
+    ax.set_ylabel('meters')
+    ax.set_xlabel('Time in seconds')
+    ax.set_ylim([-0.005,1])
+    ax.legend()
+    # ax.grid(linestyle='-', linewidth=0.5)
+    plt.show()
+    fig.savefig('PPP_std.png')
 
+    """
     sbet_np_ETPOS['lat'] = sbet_np_ETPOS['lat']*180 / np.pi
     sbet_np_ETPOS['lon'] = sbet_np_ETPOS['lon'] * 180 / np.pi
     sbet_np_PPP['lat'] = sbet_np_PPP['lat'] * 180 / np.pi
@@ -166,3 +182,4 @@ if __name__ == "__main__":
     # np.save("pros_data\\PPP_traj_ITRF14.npy", PPP_trajectory_ITRF14)
     # np.save("pros_data\\ETPOS_trajectory_ITRF14.npy", ETPOS_trajectory_ITRF14)
     print("whop done")
+    """

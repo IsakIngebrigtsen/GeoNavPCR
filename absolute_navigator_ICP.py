@@ -22,6 +22,7 @@ def transform_mapprojection(crs_from=4937, crs_to=5972):
     return Transformer.from_crs(crs_from, crs_to), currentepoch
 
 
+
 def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviation, crs_epsg):
     """
     Transform a point cloud from a PCAP file to UTM32 coordinates and process it using Open3D.
@@ -313,13 +314,13 @@ if __name__ == "__main__":
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
     system_folder = "PPP"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
-    file_list = get_files(9, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
-    from_frame = 29
-    to_frame = 56
-    skips = 3
+    file_list = get_files(1, 43, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    from_frame = 1
+    to_frame = 198
+    skips = 4
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
-    save_data = False
+    save_data = True
     print_point_cloud = False
     correct_outliers = True
     algorithm = "Point2Plane"
@@ -342,6 +343,7 @@ if __name__ == "__main__":
     movement_target = []
     initial_coordinate = []
     outliers = {}
+    outlier = False
 
     """
     # Source NDH
@@ -373,6 +375,7 @@ if __name__ == "__main__":
         EPSG = 4937
     for files in file_list:  # Iterate through the PCAP files to
         frame_outlier_list = []
+        outlier = False
         pcap_file, meta = filetype(files, system_folder)  # Collects the correct PCAP, and metadata for the corresponding PCAP file.
 
         # Iterate through all selected frames with the designated skips.
@@ -427,13 +430,13 @@ if __name__ == "__main__":
             trans_init = np.identity(4)  # initial transformation matrix
 
             trans_init, rmse = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9, model=algorithm)  # Perform ICP on downsampled data
-            trans_init, inlier_rmse = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1, model=algorithm)  # Perform ICP on the whole dataset.
-            print(f'inlier_RMSE :{np.round(inlier_rmse,3)}')
+            trans_init, init_inlier_rmse = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1, model=algorithm)  # Perform ICP on the whole dataset.
+            print(f'inlier_RMSE :{np.round(init_inlier_rmse,3)}')
             # Remove outlisers, if the point cloud registration says to move more than 3 times the standard deviation
             # of the initial coordinate, the initial coordinate is initiates as the true coordinate.
             if correct_outliers is True:
-                if inlier_rmse > 0.15:
-                    print('Warning: high RMSE value, continue ICP to converge')
+                if init_inlier_rmse > 0.15:
+                    print(f'Warning: high RMSE value, continue ICP to converge for frame {frame_index} in file {files}')
                     # algorithm = 'Point2Point'
                     # trans_init = np.identity(4)  # initial transformation matrix
                     trans_init, rmse = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9,
@@ -441,12 +444,12 @@ if __name__ == "__main__":
                     trans_init, inlier_rmse = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1,
                                                       model=algorithm)  # Perform ICP on the whole dataset.
                     print(f'inlier_RMSE :{np.round(inlier_rmse,3)}')
-                    if inlier_rmse > 0.25:
+                    if inlier_rmse >= init_inlier_rmse-0.03:
                         print('OHmygahd its an outlier')
                         frame_outlier = [frame_index, f'Inlier RMSE: {np.round(inlier_rmse,3)}']
                         frame_outlier_list.append(frame_outlier)
-
-
+                        outlier = True
+                        continue
 
             # Save the initial coordinate and the timesteps
             timesteps.append(initial_position['time_est'])  # collects all timesteps
@@ -509,8 +512,8 @@ if __name__ == "__main__":
             end_frame = time.time()
             total_frame = end_frame - start_frame
             print(f'It takes {total_frame} s per frame')
-
-        outliers[files] = frame_outlier_list
+        if outlier is True:
+            outliers[files] = frame_outlier_list
     # Reshapes the arrays,to more readable and usable data.
     sbet_full = np.reshape(full_sbet, (-1, 3))
     std = np.reshape(std, (-1, 3))
@@ -571,7 +574,12 @@ if __name__ == "__main__":
     print(f'RMSE value for initial coordinates: {rms_n_init, rms_e_init, rms_alt_init}')
     print(f'RMSE value for estimated coordinates after point cloud registration:\n {rms_n_target, rms_e_target, rms_alt_target}')
     print(f'RMSE value for initial coordinates against estimated coordinates: {rms_n_target_v_init, rms_e_target_v_init, rms_alt_target_v_init}')
-    print(f'The outliers in the file: {str(outliers)}')
+    if outlier is True:
+        print(f'The outliers after the point cloud registration is in file with frame and inlier RMSE value'
+              f': {str(outliers)}')
+    else:
+        print(f'There are no outliers after the point cloud registration')
+    plt.style.use('bmh')
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
     fig.set_size_inches(30, 30, forward=True)
     line1 = f'Estimated deviation between the cars trajectory against the true trajectory'
@@ -583,18 +591,18 @@ if __name__ == "__main__":
     line6 = f'Target trajectory = trajectory after prosessing trough point cloud registration'
 
     fig.suptitle(line1 + '\n' + line2 + "\n" + line3 + "\n" + line4 + '\n' + line5 + '\n' + line6)
-    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1], '-bo')
-    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1], '-ko')
+    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1])  # , '-bo')
+    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1])  # , '-ko')
     ax1.set_title("Target trajectory against true trajectory", loc='center', wrap=True)
-    ax1.grid()
+    # ax1.grid()
     ax1.set_xlabel("East (m)")
     ax1.set_ylabel("North (m)")
     ax1.legend(["Target trajectory", "True trajectory"])
 
-    ax2.plot(raw_coord[:, 0]-target_coord[0, 0], raw_coord[:, 1]-target_coord[0, 1], color='green')
-    ax2.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1], color='red')
+    ax2.plot(raw_coord[:, 0]-target_coord[0, 0], raw_coord[:, 1]-target_coord[0, 1])  # , color='green')
+    ax2.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1])  # , color='red')
     ax2.set_title("PPP trajectory against True trajectory", loc='center', wrap=True)
-    ax2.grid()
+    # ax2.grid()
     ax2.set_xlabel("East (m)")
     ax2.set_ylabel("North (m)")
     ax2.legend(["PPP trajectory", "True trajectory"])
@@ -603,33 +611,33 @@ if __name__ == "__main__":
     dev_y = target_coord[:, 1] - raw_coord[:, 1]
     dev_z = target_coord[:, 2] - raw_coord[:, 2]
     x_time = np.asarray(timesteps) - np.asarray(timesteps[0])
-    ax3.plot(x_time, cross_track, '-bo', label="Cross Track Error")
-    ax3.plot(x_time, long_track, '-ko', label="Long track error")
+    ax3.plot(x_time, cross_track, label="Cross Track Error")
+    ax3.plot(x_time, long_track, label="Long track error")
     # ax3.scatter(x_time, cross_track, color="blue", label="Cross Track Error")
     # ax3.scatter(x_time, long_track, color="green", label="long track error")
     ax3.set_xlabel("Frames")
     ax3.set_ylabel("Cross Track Error")
     ax3.set_ylim([-1.5, 1.5])
-    ax3.axhline(y=0.0, color='r', linestyle='-')
+    ax3.axhline(y=0.0, color='black', linestyle='-')
     # ax3.set_xticks(1, int(len(target_coord[:, 0])))
     ax3.set_title("Cross track and long track error", loc='center', wrap=True)
     ax3.legend()
 
-    ax4.plot(x_time, nearest_raw, color="green")
-    ax4.plot(x_time, nearest_referanced, color="blue")
+    # ax4.plot(x_time, nearest_raw, color="green")
+    ax4.plot(x_time, nearest_referanced)
 
     dev = np.sqrt(std[:, 0]**2+std[:, 1]**2)
     st = []
 
-    ax4.plot(x_time, dev, color="purple")
-    ax4.plot(x_time, dev_z, color="red")
+    ax4.plot(x_time, dev)
+    # ax4.plot(x_time, dev_z, color="red")
     # res = stats.linregress(timesteps, st)
 
     ax4.set_title("Deviation error in 2D from the true trajectory", loc='center', wrap=True)
     ax4.set_xlabel("Frames")
     ax4.set_ylabel("Deviation (m)")
-    ax4.set_ylim([-1.5, 1.5])
-    ax4.axhline(y=0.0, color='r', linestyle='-')
+    ax4.set_ylim([-0.2, 1.5])
+    ax4.axhline(y=0.0, color='black', linestyle='-')
     # ax4.set_xticks(1, len(nearest_raw))
     ax4.legend(["PPP trajectory", "Nearest trajectory", "Nearest trajectory based on time", "Deviation in height"])
     fig.show()
@@ -682,9 +690,13 @@ if __name__ == "__main__":
         text_file.write("\n")
         text_file.write('Georefferenced processed Target filename: ' + target_filename)
         text_file.write("\n")
-        text_file.write("The outliers of the file are frames where the inlier RMSE value is higher than 0.25m after \n "
-                        "An initial attempt to converge the outliers")
-        text_file.write("\n")
-        text_file.write(str(outliers))
-        text_file.close()
+        if outlier is True:
 
+            text_file.write("The outliers of the file are frames where the inlier RMSE value is higher than 0.25m after \n "
+                            "An initial attempt to converge the outliers")
+            text_file.write("\n")
+            text_file.write(str(outliers))
+        else:
+            text_file.write('There are no outliers after the point cloud registration')
+
+        text_file.close()

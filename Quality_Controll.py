@@ -91,9 +91,9 @@ if __name__ == "__main__":
 
     import numpy as np
 
-    target = np.load("pros_data\\target_coord_2023-03-13_0644.npy")
-    source = np.load("pros_data\\sbet_coord_2023-03-13_0644.npy")
-    init_target = np.load("pros_data\\raw_coord_2023-03-13_0644.npy")
+    target = np.load("pros_data\\target_coord_2023-03-15_0335.npy")
+    source = np.load("pros_data\\sbet_coord_2023-03-15_0335.npy")
+    init_target = np.load("pros_data\\raw_coord_2023-03-15_0335.npy")
     rms_n_init, rms_e_init, rms_alt_init = np.round(root_mean_square(init_target,target),3)
     rms_n_target, rms_e_target, rms_alt_target = np.round(root_mean_square(target, source),3)
     print(f'Init target: {rms_n_init, rms_e_init, rms_alt_init}')
