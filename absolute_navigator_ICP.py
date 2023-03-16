@@ -61,13 +61,13 @@ def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviat
 
     # Apply UTM transformation
     pyproj, c_epoch = transform_mapprojection(crs_from=crs_epsg)  # Transform PPP from itrf14 to Euref89
-    x_init, y_init, z_init, epoch_init = pyproj.transform(init_pos['lat'], init_pos['lon'], init_pos['alt'], c_epoch)
+    north_init, east_init, alt_init, epoch_init = pyproj.transform(init_pos['lat'], init_pos['lon'], init_pos['alt'], c_epoch)
     if random_deviation is True:
         # Put in a seed to get a consistent result.
         random_deviation = random.normal(-1.5, 1.5)
     else:
         random_deviation = 0
-    center_coord_utm32 = array([x_init + random_deviation, y_init + random_deviation, z_init])
+    center_coord_utm32 = array([north_init + random_deviation, east_init + random_deviation, alt_init])
     pc_transformed_utm = pc_o3d.translate(center_coord_utm32, relative=False)  # open3d
 
     return pc_transformed_utm, center_coord_utm32, initial_origin
@@ -314,15 +314,15 @@ if __name__ == "__main__":
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
     system_folder = "PPP"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
-    file_list = get_files(1, 43, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
-    from_frame = 1
-    to_frame = 198
-    skips = 4
+    file_list = get_files(25, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    from_frame = 15
+    to_frame = 25
+    skips = 3
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
     save_data = True
     print_point_cloud = False
-    correct_outliers = True
+    correct_outliers = False
     algorithm = "Point2Plane"
     seed = 1
     import sys
@@ -444,7 +444,7 @@ if __name__ == "__main__":
                     trans_init, inlier_rmse = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1,
                                                       model=algorithm)  # Perform ICP on the whole dataset.
                     print(f'inlier_RMSE :{np.round(inlier_rmse,3)}')
-                    if inlier_rmse >= init_inlier_rmse-0.03:
+                    if inlier_rmse >= init_inlier_rmse-0.03 or inlier_rmse>=0.2:
                         print('OHmygahd its an outlier')
                         frame_outlier = [frame_index, f'Inlier RMSE: {np.round(inlier_rmse,3)}']
                         frame_outlier_list.append(frame_outlier)
@@ -493,9 +493,9 @@ if __name__ == "__main__":
             true_heading = quadrant(true_position['heading'])
             direction.append(true_heading)
             transformer, current_epoch = transform_mapprojection(crs_from=4937)
-            X_true, Y_true, Z_true, epoch = transformer.transform(true_position['lat'], true_position['lon'],
-                                                                  true_position['alt'], current_epoch)
-            true_coordinates_UTM = np.array([X_true, Y_true, Z_true])
+            North_true, East_true, alt_true, epoch = transformer.transform(true_position['lat'], true_position['lon'],
+                                                                           true_position['alt'], current_epoch)
+            true_coordinates_UTM = np.array([North_true, East_true, alt_true])
             deviation = target_ICP_center - true_coordinates_UTM
 
             cte, lte = c_l_track_error(true_coordinates_UTM, target_ICP_center, true_heading)
@@ -629,7 +629,7 @@ if __name__ == "__main__":
     dev = np.sqrt(std[:, 0]**2+std[:, 1]**2)
     st = []
 
-    ax4.plot(x_time, dev)
+    # ax4.plot(x_time, dev)
     # ax4.plot(x_time, dev_z, color="red")
     # res = stats.linregress(timesteps, st)
 

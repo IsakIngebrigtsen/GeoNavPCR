@@ -120,15 +120,15 @@ if __name__ == "__main__":
     smrmsg_ETPOS = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032-smrmsg.out"
     sbet_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-LC_PPP - SBS-WGS84-UTC-Lidar-10Hz-1.743 0.044 -0.032.out"
     smrmsg_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-LC_PPP - SBS-WGS84-UTC-Lidar-10Hz-1.743 0.044 -0.032-smrmsg.out"
-    smrmsg_stand = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Standalone-LAZ\\sbet-UTCtime-211021-Lillehammer-standalone-RT - PPP-WGS84-smrmsg.out"
-    sbet_filename_stand = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Standalone-LAZ\\sbet-UTCtime-211021-Lillehammer-standalone-RT - PPP-WGS84.out"
+    smrmsg_stand = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\sbet-output-UTC-1000.out"
+    sbet_filename_stand = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\sbet-output-UTC-1000-smrmsg.out"
 
     FROM_CRS = 4326 #WGS84
     TO_CRS =  25832 #UTM32
     sbet_np_ETPOS, smrmsg_np_ETPOS  =read_sbet(sbet_ETPOS, smrmsg_ETPOS)
-    sbet_np_ETPOS, smrmsg_np_ETPOS  =read_sbet(sbet_PPP, smrmsg_PPP)
+    # sbet_np_ETPOS, smrmsg_np_ETPOS  =read_sbet(sbet_PPP, smrmsg_PPP)
 
-    sbet_np_stand, smrmsg_np_stand = read_sbet(sbet_filename_stand, smrmsg_stand)
+    # sbet_np_stand, smrmsg_np_stand = read_sbet(sbet_filename_stand, smrmsg_stand)
     # lat = np.mean(smrmsg_np["lat-std"])
     # lon = np.mean(smrmsg_np["lon-std"])
     # alt = np.mean(smrmsg_np["lon-std"])
@@ -141,17 +141,17 @@ if __name__ == "__main__":
     plt.style.use('bmh')
     fig, ax = plt.subplots(figsize=(20, 10))
     # ax.set_facecolor('#eafff5')
-    ax.set_title('Position Std Dev(m), after processing with PPP')
+    ax.set_title('Position Std Dev(m), after processing with ETPOS')
     ax.plot(smrmsg_np_ETPOS['time'], smrmsg_np_ETPOS['lat-std'], linewidth=0.2, label=f'Latitude std, mean:{mean_lat} m')
     ax.plot(smrmsg_np_ETPOS['time'], smrmsg_np_ETPOS['lon-std'], linewidth=0.2, label=f'longitude std, mean:{mean_lon} m ')
     ax.plot(smrmsg_np_ETPOS['time'], smrmsg_np_ETPOS['alt-std'], linewidth=0.2, label=f'altitude std, mean:{mean_alt} m')
     ax.set_ylabel('meters')
-    ax.set_xlabel('Time in seconds')
+    # ax.set_xlabel('Time in seconds')
     ax.set_ylim([-0.005,1])
     ax.legend()
     # ax.grid(linestyle='-', linewidth=0.5)
     plt.show()
-    fig.savefig('PPP_std.png')
+    fig.savefig('ETPOS_std.png')
 
     """
     sbet_np_ETPOS['lat'] = sbet_np_ETPOS['lat']*180 / np.pi

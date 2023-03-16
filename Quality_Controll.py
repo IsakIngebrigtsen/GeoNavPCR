@@ -53,12 +53,12 @@ def root_mean_square(target_points,source_points):
         Tuple of three floats representing the RMS errors in the North, East, and altitude (up) directions, respectively.
     """
 
-    target_dict = {'Y': target_points[:, 0],'X': target_points[:, 1], 'alt': target_points[:, 2]}
-    source_dict = {'Y': source_points[:, 0], 'X': source_points[:, 1], 'alt': source_points[:, 2]}
+    target_dict = {'North': target_points[:, 0],'East': target_points[:, 1], 'alt': target_points[:, 2]}
+    source_dict = {'North': source_points[:, 0], 'East': source_points[:, 1], 'alt': source_points[:, 2]}
 
-    rms_n = np.sqrt((np.sum((target_dict['X']-source_dict['X'])**2))/len(source_dict['X']))
-    rms_e = np.sqrt((np.sum((target_dict['Y']-source_dict['Y'])**2))/len(source_dict['X']))
-    rms_alt = np.sqrt((np.sum((target_dict['alt']-source_dict['alt'])**2))/len(source_dict['X']))
+    rms_n = np.sqrt((np.sum((target_dict['North']-source_dict['North'])**2))/len(source_dict['North']))
+    rms_e = np.sqrt((np.sum((target_dict['East']-source_dict['East'])**2))/len(source_dict['East']))
+    rms_alt = np.sqrt((np.sum((target_dict['alt']-source_dict['alt'])**2))/len(source_dict['alt']))
 
     return rms_n, rms_e, rms_alt
 
@@ -91,9 +91,9 @@ if __name__ == "__main__":
 
     import numpy as np
 
-    target = np.load("pros_data\\target_coord_2023-03-15_0335.npy")
-    source = np.load("pros_data\\sbet_coord_2023-03-15_0335.npy")
-    init_target = np.load("pros_data\\raw_coord_2023-03-15_0335.npy")
+    target = np.load("pros_data\\target_coord_2023-03-16_1032.npy")
+    source = np.load("pros_data\\sbet_coord_2023-03-16_1032.npy")
+    init_target = np.load("pros_data\\raw_coord_2023-03-16_1032.npy")
     rms_n_init, rms_e_init, rms_alt_init = np.round(root_mean_square(init_target,target),3)
     rms_n_target, rms_e_target, rms_alt_target = np.round(root_mean_square(target, source),3)
     print(f'Init target: {rms_n_init, rms_e_init, rms_alt_init}')
