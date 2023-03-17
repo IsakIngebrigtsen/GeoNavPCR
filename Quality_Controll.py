@@ -6,8 +6,8 @@ def c_l_track_error(p1, p2, heading):
     """Calculates the cross-track error (cte) and along-track error (lte) between two points.
 
     Args:
-        p1 (numpy.ndarray): The coordinates of the starting point in the form [x, y, z].
-        p2 (numpy.ndarray): The coordinates of the ending point in the form [x, y, z].
+        p1 (numpy.array): The coordinates of the starting point in the form [x, y, z].
+        p2 (numpy.array): The coordinates of the ending point in the form [x, y, z].
         heading (float): The heading angle in radians.
 
     Returns:
@@ -53,14 +53,14 @@ def root_mean_square(target_points,source_points):
         Tuple of three floats representing the RMS errors in the North, East, and altitude (up) directions, respectively.
     """
 
-    target_dict = {'North': target_points[:, 0],'East': target_points[:, 1], 'alt': target_points[:, 2]}
-    source_dict = {'North': source_points[:, 0], 'East': source_points[:, 1], 'alt': source_points[:, 2]}
+    target_dict = {'East': target_points[:, 0], 'North': target_points[:, 1], 'alt': target_points[:, 2]}
+    source_dict = {'East': source_points[:, 0], 'North': source_points[:, 1], 'alt': source_points[:, 2]}
 
     rms_n = np.sqrt((np.sum((target_dict['North']-source_dict['North'])**2))/len(source_dict['North']))
     rms_e = np.sqrt((np.sum((target_dict['East']-source_dict['East'])**2))/len(source_dict['East']))
     rms_alt = np.sqrt((np.sum((target_dict['alt']-source_dict['alt'])**2))/len(source_dict['alt']))
 
-    return rms_n, rms_e, rms_alt
+    return rms_e, rms_n, rms_alt
 
 
 def standard_deviation(coord_1, coord_2):

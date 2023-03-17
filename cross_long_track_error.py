@@ -27,8 +27,8 @@ def c_l_track_error(p1, p2, heading):
     # w = np.cross(v_norm, np.array([0, 0, 1]))
     # print(f'test{w} stop TEEEEST')
     # Calculate the cross-track error
-    cte = np.sin(tg-np.pi+heading) * v_norm
-    lte = np.cos(tg-np.pi+heading) * v_norm
+    cte = np.cos(tg-np.pi+heading) * v_norm
+    lte = np.sin(tg-np.pi+heading) * v_norm
 
     return cte, lte
 
