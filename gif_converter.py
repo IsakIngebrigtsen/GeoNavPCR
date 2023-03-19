@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import sys
 
 fp_in = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\img_Pointcloud\\"
-fp_out = "file_16_to_10_frame_0_196_after_georef.gif"
+fp_out = "file_8_to_10_frame_0_196_after_georef.gif"
 sys.path.insert(0, "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\img_Pointcloud")
 
 file_names = sorted((fn for fn in os.listdir(fp_in) if fn.endswith('.png')))
@@ -22,5 +22,5 @@ for file in file_names:
     ims.append([im])
 
 ani = animation.ArtistAnimation(fig, ims, interval=200)
-ani.save('Gifs\\08031200.gif', dpi=250)
+ani.save('Gifs\\fp_out', dpi=250)
 print("Im done :D")

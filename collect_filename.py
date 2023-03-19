@@ -2,13 +2,13 @@ def get_files(from_file_number=2, number_of_files=1, folder="ETPOS"):
     # Collects a number of files from the referance folder, max number of files are 44
     import os
 
-    folder_ETPOS = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-PCAP"
-    folder_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-Standalone-PCAP"
+    folder_round1 = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Raw_Frames_Round_1"
+    folder_round2 = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-Standalone-PCAP"
 
-    if folder == "ETPOS":
-        folder_dir = folder_ETPOS
+    if folder == "Round1":
+        folder_dir = folder_round1
     else:
-        folder_dir = folder_PPP
+        folder_dir = folder_round2
 
     files_list = os.listdir(folder_dir)
     y = []
@@ -33,7 +33,7 @@ def get_files(from_file_number=2, number_of_files=1, folder="ETPOS"):
 if __name__ == "__main__":
 
     from absolute_navigator_ICP import read_laz
-    file_name = get_files(0, 44, folder = "ETPOS")
+    file_name = get_files(0, 45, folder = "Round2")
     h = 0
     for k in range(0,198,5):
         h += 1
