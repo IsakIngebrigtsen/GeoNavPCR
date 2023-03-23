@@ -3,7 +3,7 @@ def get_files(from_file_number=2, number_of_files=1, folder="ETPOS"):
     import os
 
     folder_round1 = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Raw_Frames_Round_1"
-    folder_round2 = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-Standalone-PCAP"
+    folder_round2 = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Raw_Frames_Round_2"
 
     if folder == "Round1":
         folder_dir = folder_round1

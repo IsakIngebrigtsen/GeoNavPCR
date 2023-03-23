@@ -54,7 +54,7 @@ def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviat
     # Process point cloud data with Open3D
     pc_o3d = point_cloud_pros(point_cloud_prossesing)
     r = pc_o3d.get_rotation_matrix_from_xyz((0, 0, quadrant(init_pos['heading'])))  # Open3d
-    pc_o3d.rotate(r, center=(0, 0, 0))  # open3d
+    pc_o3d.rotate(r, center=(0,0,0))  # open3d
     initial_origin = pc_o3d.get_center()
     pc_o3d = pc_o3d.translate([0, 0, 0], relative=False)  # open3d
 
@@ -200,6 +200,7 @@ def read_laz(laz_file):
 
 
 def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_value=1, model="Point2Plane"):
+
     """
     Runs Open3D's ICP engine on the target and source point cloud and returns the transformation matrix.
 
@@ -212,6 +213,7 @@ def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_va
     - model(str): The ICP algorithm used in the point cloud registration: either "Point2Plane" or "Point2Point"
     Returns:
     - numpy.ndarray: The final transformation matrix.
+    - numpy.ndarray: The inlier RMSE value for the point cloud registration
     """
 
     from open3d import pipelines
@@ -219,20 +221,29 @@ def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_va
     convergence = pipelines.registration.ICPConvergenceCriteria(max_iteration=100)
     if model == "Point2Point":
         icp_algorithm = pipelines.registration.TransformationEstimationPointToPoint()
+    elif model == "RANSAC":
+        target_down, target_fpfh = preprocess_point_cloud(init_target)
+        source_down, source_fpfh = preprocess_point_cloud(init_source)
+        reg_p2l = execute_global_registration(target_down, source_down, target_fpfh,
+                                              source_fpfh, voxel=0.5)
+        transformation = reg_p2l.transformation
+        reg_p2l = pipelines.registration.registration_icp(
+            init_target, init_source, threshold_value, transformation, pipelines.registration.TransformationEstimationPointToPlane(), convergence)
+        return transformation, reg_p2l.inlier_rmse
     else:
         icp_algorithm = pipelines.registration.TransformationEstimationPointToPlane()
-
-    for i in range(iterations):
+    reg_p2l = pipelines.registration.registration_icp(
+        init_target, init_source, threshold_value, transformation, icp_algorithm, convergence)
+    for i in range(iterations - 1):
         reg_p2l = pipelines.registration.registration_icp(
             init_target, init_source, threshold_value, transformation, icp_algorithm, convergence)
         # Check for convergence
         if i > 1 and np.abs(np.mean(reg_p2l.transformation[0:3, 3]-transformation[0:3, 3])) < 1e-5:
             transformation = reg_p2l.transformation
             break
+        transformation = reg_p2l.transformation
 
-        transformation, inlier = reg_p2l.transformation, reg_p2l.inlier_rmse
-
-    return transformation, inlier
+    return transformation, reg_p2l.inlier_rmse
 
 
 def draw_las(pc_points, las_file_name):
@@ -285,9 +296,9 @@ def filetype(filename, system="ETPOS"):
         pcap_raw = pathbase + raw_file + ".pcap"
         metadata = pathbase + raw_file + ".json"
 
-    elif system == "PPP":
+    elif system == "Round2":
         raw_file = "OS-1-128_992035000186_1024x10_20211021_" + filename
-        pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-Standalone-PCAP\\"
+        pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Raw_Frames_Round_2\\"
         pcap_raw = pathbase + raw_file + ".pcap"
         metadata = pathbase + raw_file + ".json"
     else:
@@ -331,6 +342,45 @@ def get_coordinate(pcap, frame_i=None):
                         'heading': coord[frame_i].heading}
             return init_pos
 
+# RANSAC TEST
+
+
+def preprocess_point_cloud(pcd, voxel=0.5):
+    # Open 3d data
+    import open3d as o3d
+    # print(":: Downsample with a voxel size %.3f." % voxel_size)
+    pcd_down = pcd.voxel_down_sample(voxel)
+
+    radius_normal = voxel_size * 2
+    print(":: Estimate normal with search radius %.3f." % radius_normal)
+    pcd_down.estimate_normals(
+        o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30))
+
+    radius_feature = voxel_size * 5
+    print(":: Compute FPFH feature with search radius %.3f." % radius_feature)
+    pcd_fpfh = o3d.pipelines.registration.compute_fpfh_feature(
+        pcd_down,
+        o3d.geometry.KDTreeSearchParamHybrid(radius=radius_feature, max_nn=100))
+    return pcd_down, pcd_fpfh
+
+
+def execute_global_registration(source_down, target_down, source_fpfh,
+                                target_fpfh, voxel=0.5):
+    import open3d as o3d
+    # Open3d
+    distance_threshold = voxel * 1.5
+    result = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+        source_down, target_down, source_fpfh, target_fpfh, True,
+        distance_threshold,
+        o3d.pipelines.registration.TransformationEstimationPointToPoint(False),
+        3, [
+            o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(
+                0.9),
+            o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
+                distance_threshold)
+        ], o3d.pipelines.registration.RANSACConvergenceCriteria(100000, 0.999))
+    return result
+
 
 if __name__ == "__main__":
 
@@ -347,13 +397,13 @@ if __name__ == "__main__":
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
     system_folder = "Round1"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
-    file_list = get_files(8, 3, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
-    from_frame = 1
-    to_frame = 198
-    skips = 5
+    file_list = get_files(14, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    from_frame = 50
+    to_frame = 53
+    skips = 2
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
-    save_data = True
+    save_data = False
     print_point_cloud = False
     handle_outliers = True
     algorithm = "Point2Plane"
@@ -486,9 +536,9 @@ if __name__ == "__main__":
             # Save the initial coordinate and the timesteps
             timesteps.append(initial_position['time_est'])  # collects all timesteps
             initial_coordinate.append(init_coord)
-            print(np.round(target_transformed.get_center(),3))
+            print(np.round(target_transformed.get_center(), 3))
             target_transformed.transform(trans_init)  # Final Transformation for the target point cloud
-            print(np.round(target_transformed.get_center(),3))
+            print(np.round(target_transformed.get_center(), 3))
 
             movement = trans_init[0:3, 3] - origo
             print(movement)
@@ -631,8 +681,8 @@ if __name__ == "__main__":
     line6 = f'Target trajectory = trajectory after prosessing trough point cloud registration'
 
     fig.suptitle(line1 + '\n' + line2 + "\n" + line3 + "\n" + line4 + '\n' + line5 + '\n' + line6)
-    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1], '-bo')
-    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1], '-ko')
+    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1])
+    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1])
     ax1.set_title("Target trajectory against true trajectory", loc='center', wrap=True)
     # ax1.grid()
     ax1.set_xlabel("East (m)")
@@ -712,6 +762,13 @@ if __name__ == "__main__":
         text_file.write("\n")
         text_file.write(f'processed the file {file_list}, with the frames {from_frame} to {to_frame},with {skips} skips, and it took {total_time} seconds\n')
         text_file.write(f'Thats {np.round(total_time/60,2)} minutes or {np.round(total_time/(60*60),2)} hours\n')
+
+        text_file.write(f'RMSE value for initial coordinates: {rms_n_init, rms_e_init, rms_alt_init}\n\n')
+        text_file.write(
+            f'RMSE value for estimated coordinates after point cloud registration:\n {rms_n_target, rms_e_target, rms_alt_target}\n\n')
+        text_file.write(
+            f'RMSE value for initial coordinates against estimated coordinates: {rms_n_target_v_init, rms_e_target_v_init, rms_alt_target_v_init}\n\n')
+
         text_file.write(line1)
         text_file.write("\n")
         text_file.write(line2)

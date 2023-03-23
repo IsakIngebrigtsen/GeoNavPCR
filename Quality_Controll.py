@@ -91,14 +91,14 @@ if __name__ == "__main__":
 
     import numpy as np
 
-    target = np.load("pros_data\\target_coord_2023-03-16_1032.npy")
-    source = np.load("pros_data\\sbet_coord_2023-03-16_1032.npy")
-    init_target = np.load("pros_data\\raw_coord_2023-03-16_1032.npy")
-    rms_n_init, rms_e_init, rms_alt_init = np.round(root_mean_square(init_target,target),3)
-    rms_n_target, rms_e_target, rms_alt_target = np.round(root_mean_square(target, source),3)
+    target = np.load("pros_data\\Round1_fulltraj_corrected_outliers\\target_coord_2023-03-20_0641.npy")
+    source = np.load("pros_data\\Round1_fulltraj_corrected_outliers\\sbet_coord_2023-03-20_0641.npy")
+    init_target = np.load("pros_data\\Round1_fulltraj_corrected_outliers\\raw_coord_2023-03-20_0641.npy")
+    rms_e_init, rms_n_init, rms_alt_init = np.round(root_mean_square(init_target,target),2)
+    rms_e_target, rms_n_target, rms_alt_target = np.round(root_mean_square(target, source),2)
     print(f'Init target: {rms_n_init, rms_e_init, rms_alt_init}')
     print(f'target: {rms_n_target, rms_e_target, rms_alt_target}')
-    std_N, std_E, std_alt = standard_deviation(init_target, source)
+    std_N, std_E, std_alt = standard_deviation(init_target, target)
     std_N_tar, std_E_tar,std_alt_tar = standard_deviation(target, source)
     print(f'standard deviation between the coordinates and the\ncalculated coordinates: {std_N, std_E,std_alt}')
     print(f'standard deviation between the initial coordinates and the\ncalculated coordinates: {std_N_tar, std_E_tar,std_alt_tar}')
