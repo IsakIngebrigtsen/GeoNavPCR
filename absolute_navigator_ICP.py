@@ -264,7 +264,7 @@ def draw_las(pc_points, las_file_name):
     header = LasHeader(point_format=3, version="1.2")
     header.add_extra_dim(laspy.ExtraBytesParams(name="random", type=int32))
     header.offsets = min(my_data, axis=0)
-    header.scales = array([0.1, 0.1, 0.1])
+    header.scales = array([0.001, 0.001, 0.001])
 
     # 2. Create a Las
     las = LasData(header)
@@ -399,11 +399,11 @@ if __name__ == "__main__":
     system_folder = "Round1"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
     file_list = get_files(14, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
     from_frame = 50
-    to_frame = 53
+    to_frame = 56
     skips = 2
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
-    save_data = False
+    save_data = True
     print_point_cloud = False
     handle_outliers = True
     algorithm = "Point2Plane"
@@ -761,13 +761,11 @@ if __name__ == "__main__":
         text_file = open('pros_data\\' + file_name, "w")
         text_file.write("\n")
         text_file.write(f'processed the file {file_list}, with the frames {from_frame} to {to_frame},with {skips} skips, and it took {total_time} seconds\n')
-        text_file.write(f'Thats {np.round(total_time/60,2)} minutes or {np.round(total_time/(60*60),2)} hours\n')
+        text_file.write(f'Thats {np.round(total_time/60,2)} minutes or {np.round(total_time/(60*60),2)} hours\n\n\n')
 
-        text_file.write(f'RMSE value for initial coordinates: {rms_n_init, rms_e_init, rms_alt_init}\n\n')
-        text_file.write(
-            f'RMSE value for estimated coordinates after point cloud registration:\n {rms_n_target, rms_e_target, rms_alt_target}\n\n')
-        text_file.write(
-            f'RMSE value for initial coordinates against estimated coordinates: {rms_n_target_v_init, rms_e_target_v_init, rms_alt_target_v_init}\n\n')
+        text_file.write(f'RMSE value for initial coordinates: {rms_n_init, rms_e_init, rms_alt_init}\n')
+        text_file.write(f'RMSE value for estimated coordinates after point cloud registration:{rms_n_target, rms_e_target, rms_alt_target} \n')
+        text_file.write(f'RMSE value for initial coordinates against estimated coordinates: {rms_n_target_v_init, rms_e_target_v_init, rms_alt_target_v_init} \n\n\n')
 
         text_file.write(line1)
         text_file.write("\n")
@@ -796,5 +794,6 @@ if __name__ == "__main__":
             text_file.write('The results are not corrected for outliers')
         else:
             text_file.write('There are no outliers after the point cloud registration')
+
 
         text_file.close()

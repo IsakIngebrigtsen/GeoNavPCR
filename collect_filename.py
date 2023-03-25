@@ -1,4 +1,4 @@
-def get_files(from_file_number=2, number_of_files=1, folder="ETPOS"):
+def get_files(from_file_number=2, number_of_files=1, folder="Round1"):
     # Collects a number of files from the referance folder, max number of files are 44
     import os
 
