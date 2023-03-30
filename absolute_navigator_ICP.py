@@ -98,7 +98,7 @@ def get_frame(pcap_raw, metadata, frame):
     # Read the xth frame
     with closing(Scans(lidar_data)) as scans:
         # Frame -1 to get the correct frame from the pcap vs sbet file.
-        scan = nth(scans, frame - 1)
+        scan = nth(scans, frame-1)
 
     # Create a function that translates coordinates to a plottable coordinate system
     xyzlut = XYZLut(lidar_data.metadata)
@@ -397,15 +397,15 @@ if __name__ == "__main__":
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
     system_folder = "Round1"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
-    file_list = get_files(14, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
-    from_frame = 50
-    to_frame = 56
-    skips = 2
-    sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
-    standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
+    file_list = get_files(30, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    from_frame = 100
+    to_frame = 104
+    skips = 1
+    sbet_process = "ETPOS"  # Choose between SBET_prosess "PPP" or "ETPOS"
+    standalone = False  # if True a 1.5 meters deviation is added to the sbet data.
     save_data = True
     print_point_cloud = False
-    handle_outliers = True
+    handle_outliers = False
     algorithm = "Point2Plane"
     seed = 1
     import sys
@@ -681,8 +681,8 @@ if __name__ == "__main__":
     line6 = f'Target trajectory = trajectory after prosessing trough point cloud registration'
 
     fig.suptitle(line1 + '\n' + line2 + "\n" + line3 + "\n" + line4 + '\n' + line5 + '\n' + line6)
-    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1])
-    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1])
+    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1], '-bo')
+    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1], '-ro')
     ax1.set_title("Target trajectory against true trajectory", loc='center', wrap=True)
     # ax1.grid()
     ax1.set_xlabel("East (m)")

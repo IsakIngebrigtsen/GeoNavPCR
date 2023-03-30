@@ -135,6 +135,7 @@ if __name__ == "__main__":
     # time = np.mean(smrmsg_np["time"])
     # print(lat,lon,alt,time)
     gpsweek = filename2gpsweek("C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-Standalone-PCAP\\OS-1-128_992035000186_1024x10_20211021_200041.pcap")
+    """
     mean_lat = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['lat-std']**2)/(len(smrmsg_np_ETPOS['lat-std'])-1)), 3)
     mean_lon = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['lon-std']**2)/(len(smrmsg_np_ETPOS['lon-std'])-1)), 3)
     mean_alt = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['alt-std']**2)/(len(smrmsg_np_ETPOS['alt-std'])-1)), 3)
@@ -145,21 +146,21 @@ if __name__ == "__main__":
     ax.plot(smrmsg_np_ETPOS['time'], smrmsg_np_ETPOS['lat-std'], linewidth=0.2, label=f'Latitude std, mean:{mean_lat} m')
     ax.plot(smrmsg_np_ETPOS['time'], smrmsg_np_ETPOS['lon-std'], linewidth=0.2, label=f'longitude std, mean:{mean_lon} m ')
     ax.plot(smrmsg_np_ETPOS['time'], smrmsg_np_ETPOS['alt-std'], linewidth=0.2, label=f'altitude std, mean:{mean_alt} m')
-    ax.set_ylabel('meters')
+    ax.set_ylabel('meter')
     # ax.set_xlabel('Time in seconds')
     ax.set_ylim([-0.005,1])
     ax.legend()
     # ax.grid(linestyle='-', linewidth=0.5)
     plt.show()
     fig.savefig('ETPOS_std.png')
-
     """
+
     sbet_np_ETPOS['lat'] = sbet_np_ETPOS['lat']*180 / np.pi
     sbet_np_ETPOS['lon'] = sbet_np_ETPOS['lon'] * 180 / np.pi
-    sbet_np_PPP['lat'] = sbet_np_PPP['lat'] * 180 / np.pi
-    sbet_np_PPP['lon'] = sbet_np_PPP['lon'] * 180 / np.pi
-    sbet_np_stand['lat'] = sbet_np_stand['lat'] * 180 / np.pi
-    sbet_np_stand['lon'] = sbet_np_stand['lon'] * 180 / np.pi
+    # sbet_PPP['lat'] = sbet_PPP['lat'] * 180 / np.pi
+    # sbet_PPP['lon'] = sbet_PPP['lon'] * 180 / np.pi
+    # sbet_filename_stand['lat'] = sbet_filename_stand['lat'] * 180 / np.pi
+    # sbet_filename_stand['lon'] = sbet_filename_stand['lon'] * 180 / np.pi
     doy = pd.Period("2021-10-21", freq="H").day_of_year
     epoch = int(2021) + int(doy) / 365  # Current Epoch ex: 2021.45
     current_epoch = [epoch for k in range(sbet_np_ETPOS['lat'].size)]
@@ -170,16 +171,15 @@ if __name__ == "__main__":
 
     epoch = int(2021) + int(doy) / 365  # Current Epoch ex: 2021.45
     current_epoch = [epoch for k in range(sbet_np_ETPOS['lat'].size)]
-    current_epoch = [epoch] * sbet_np_PPP['lat'].size
+    # current_epoch = [epoch] * sbet_PPP['lat'].size
     transformer = Transformer.from_crs(7912, 5972)
-    X_PPP_ITRF14, Y_PPP_ITRF14, Z_PPP_ITRF14, epoch = transformer.transform(sbet_np_PPP['lat'], sbet_np_PPP['lon'], sbet_np_PPP['alt'], current_epoch)
-    PPP_trajectory_ITRF14 = np.array([X_PPP_ITRF14, Y_PPP_ITRF14, Z_PPP_ITRF14]).T
+    # X_PPP_ITRF14, Y_PPP_ITRF14, Z_PPP_ITRF14, epoch = transformer.transform(sbet_PPP['lat'], sbet_PPP['lon'], sbet_PPP['alt'], current_epoch)
+    # PPP_trajectory_ITRF14 = np.array([X_PPP_ITRF14, Y_PPP_ITRF14, Z_PPP_ITRF14]).T
     ETPOS_trajectory_ITRF14 = np.array([X_ETPOS_ITRF14, Y_ETPOS_ITRF14, Z_ETPOS_ITRF14]).T
-    st = ETPOS_trajectory_ITRF14 - PPP_trajectory_ITRF14
-    Y = ETPOS_trajectory_ITRF14 - PPP_trajectory_ITRF14
-    print(np.mean(np.sqrt(st[:,0]**2+st[:,1]**2)))
+    # st = ETPOS_trajectory_ITRF14 - PPP_trajectory_ITRF14
+    # Y = ETPOS_trajectory_ITRF14 - PPP_trajectory_ITRF14
+    # print(np.mean(np.sqrt(st[:,0]**2+st[:,1]**2)))
 
     # np.save("pros_data\\PPP_traj_ITRF14.npy", PPP_trajectory_ITRF14)
-    # np.save("pros_data\\ETPOS_trajectory_ITRF14.npy", ETPOS_trajectory_ITRF14)
+    np.save("pros_data\\ETPOS_trajectory_EUREF89.npy", ETPOS_trajectory_ITRF14)
     print("whop done")
-    """

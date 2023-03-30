@@ -91,15 +91,71 @@ if __name__ == "__main__":
 
     import numpy as np
 
-    target = np.load("pros_data\\Round1_fulltraj_corrected_outliers\\target_coord_2023-03-20_0641.npy")
-    source = np.load("pros_data\\Round1_fulltraj_corrected_outliers\\sbet_coord_2023-03-20_0641.npy")
-    init_target = np.load("pros_data\\Round1_fulltraj_corrected_outliers\\raw_coord_2023-03-20_0641.npy")
+    target = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\target_coord_2023-03-20_0641.npy")
+    source = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\sbet_coord_2023-03-20_0641.npy")
+    init_target = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\raw_coord_2023-03-20_0641.npy")
     rms_e_init, rms_n_init, rms_alt_init = np.round(root_mean_square(init_target,target),2)
     rms_e_target, rms_n_target, rms_alt_target = np.round(root_mean_square(target, source),2)
     print(f'Init target: {rms_n_init, rms_e_init, rms_alt_init}')
     print(f'target: {rms_n_target, rms_e_target, rms_alt_target}')
-    std_N, std_E, std_alt = standard_deviation(init_target, target)
-    std_N_tar, std_E_tar,std_alt_tar = standard_deviation(target, source)
+    std_N, std_E, std_alt = standard_deviation(init_target, source)
+    std_N_tar, std_E_tar,std_alt_tar = standard_deviation(init_target, target)
+    import numpy as np
+    import similaritymeasures
+    import matplotlib.pyplot as plt
+
+    exp_data = init_target[:,0:2]
+    num_data = source[:,0:2]
+    xi, eta, xiP, etaP = similaritymeasures.normalizeTwoCurves(exp_data[:,0], exp_data[:,1], num_data[:,0], num_data[:,1])
+    # exp_data = np.array((xi,eta))
+    # num_data = np.array((xiP,etaP))
+
+    # quantify the difference between the two curves using PCM
+    pcm = similaritymeasures.pcm(exp_data, num_data)
+    # quantify the difference between the two curves using
+    # Discrete Frechet distance
+    df = similaritymeasures.frechet_dist(exp_data, num_data)
+    # quantify the difference between the two curves using
+    # area between two curves
+    area = similaritymeasures.area_between_two_curves(exp_data, num_data)
+    # quantify the difference between the two curves using
+    # Curve Length based similarity measure
+    cl = similaritymeasures.curve_length_measure(exp_data, num_data)
+    # quantify the difference between the two curves using
+    # Dynamic Time Warping distance
+    dtw, d = similaritymeasures.dtw(exp_data, num_data)
+    # mean absolute error
+    mae = similaritymeasures.mae(exp_data, num_data)
+    # mean squared error
+    mse = similaritymeasures.mse(exp_data, num_data)
+
+    # print the results
+    print(pcm, df, area, cl, dtw, mae, mse)
+
+    # plot the data
+    plt.figure()
+    plt.plot(exp_data[:, 0], exp_data[:, 1])
+    plt.plot(num_data[:, 0], num_data[:, 1])
+    plt.show()
+
+    ## And much more!
+
+    """
+    from sklearn.metrics import r2_score
+    from scipy.spatial.distance import cdist
+    Y = cdist(source[:,0:2], target[:,0:2], 'euclidean')
+
+    x_data = r2_score(source[:,0]-target[0,0], init_target[:,0]-target[0,0],multioutput='variance_weighted')
+    y_data = r2_score(source[:,1]-target[0,1], init_target[:,1]-target[0,1],multioutput='variance_weighted')
+    print(np.round(x_data, 8), np.round(y_data, 8))
+    from frechetdist import frdist
+    test = frdist(source[:,0:2]-target[0,0:2],target[:,0:2]-target[0,0:2])
+
+    from sklearn.metrics import r2_score
+    x_data = r2_score(source[:,0]-target[0,0], target[:,0]-target[0,0],multioutput='variance_weighted')
+    y_data = r2_score(source[:,1]-target[0,1], target[:,1]-target[0,1],multioutput='variance_weighted')
+    """
+    # print(np.round(x_data, 8), np.round(y_data, 8))
     print(f'standard deviation between the coordinates and the\ncalculated coordinates: {std_N, std_E,std_alt}')
     print(f'standard deviation between the initial coordinates and the\ncalculated coordinates: {std_N_tar, std_E_tar,std_alt_tar}')
     """

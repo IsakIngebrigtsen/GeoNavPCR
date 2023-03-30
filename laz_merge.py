@@ -7,7 +7,7 @@ import numpy as np
 import time
 import absolute_navigator_ICP as Pr
 from collect_filename import get_files
-file_list = get_files(16, 1)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+file_list = get_files(25, 1,'Round1')  # the files from the 10th file and 5 files on # Take file nr. 17 next.
 full_pc = np.zeros(3)
 start_time = time.time()
 
@@ -18,8 +18,9 @@ for files in file_list:  # For loop that goes through the PCAP files, and the co
     xyz = las.xyz
     full_pc = np.vstack((full_pc, xyz))
 full_pc = np.delete(full_pc, 0, 0)
-source = Pr.point_cloud_pros(full_pc)
-source_np = np.asarray(source.points)
+# source = Pr.point_cloud_pros(full_pc)
+# source_np = np.asarray(source.points)
+# Pr.draw_las(full_pc, f'test_5.laz')
 
 
 # full_pc = np.reshape(full_pc, (-1,3))
@@ -52,8 +53,9 @@ def scaled_x_dimension(las_file):
     return np.stack((x, y, z), axis=-1)
 
 
-# XYZ = scaled_x_dimension(las)
+XYZ = scaled_x_dimension(las)
 
+"""
 import pylas
 import numpy as np
 laz_file = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\1024x10_20211021_200102.laz"
@@ -71,7 +73,8 @@ las_pylas = np.stack((las.x, las.y, las.z), axis=-1)
 
 
 
-
 print(np.unique(las.classification))
+"""
 
-Pr.draw_las(full_pc, f'{file_list}_test_5.laz')
+source_pc_numpy = np.load(
+    'C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\full_source_PC_np.npy')
