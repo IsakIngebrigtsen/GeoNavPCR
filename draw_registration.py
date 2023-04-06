@@ -13,8 +13,10 @@ def draw_absolute_registration_result(pc_1,pc_2,target_center):
     source_temp = copy.deepcopy(pc_1)
     target_temp = copy.deepcopy(pc_2)
 
-    source_temp.paint_uniform_color([1, 0.706, 0])
-    target_temp.paint_uniform_color([0, 0.651, 0.929])
+    # source_temp.paint_uniform_color([1, 0.706, 0])
+    # target_temp.paint_uniform_color([0, 0.651, 0.929])
+    source_temp.paint_uniform_color([1, 1, 1])
+    target_temp.paint_uniform_color([0, 1, 0])
     # o3d.visualization.draw_geometries([source_ICP, target_ICP])
     # create point cloud and coordinate axes geometries
     axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1, origin=target_center)
@@ -47,9 +49,8 @@ def draw_absolute_registration_result(pc_1,pc_2,target_center):
     print("Press Q or Excape to exit")
     vis.poll_events()
 
-
-    vis.capture_screen_image('img_Pointcloud\\RUN_absolute' + time.strftime("%Y-%m-%d %H%M%S") + '.png')
-    # vis.run()
+    # vis.capture_screen_image('img_Pointcloud\\RUN_absolute' + time.strftime("%Y-%m-%d %H%M%S") + '.png')
+    vis.run()
     vis.destroy_window()
 
 
@@ -76,7 +77,7 @@ def draw_registration_result(pc_1, pc_2, transformation):
     vis.add_geometry(axes)
     ropt = vis.get_render_option()
     ropt.point_size = 0.5
-    ropt.background_color = np.asarray([0, 0, 0])
+    ropt.background_color = np.asarray([1, 1, 1])
 
     # initialize camera settings
     ctr = vis.get_view_control()

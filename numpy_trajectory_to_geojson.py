@@ -13,7 +13,7 @@ if __name__ == "__main__":
     print('Input the numpyarray and path to be processed into geojson format:\n')
     numpy_array = input()
     filename = numpy_array.split("\\")
-    filename = filename[1].split(".")
+    filename = filename[3].split(".")
     filename = filename[0]
     trajectory = np.load(numpy_array)
     list = []

@@ -31,8 +31,6 @@ def c_l_track_error(p1, p2, heading):
         tg = -tg + 2*np.pi
 
     # Calculate the perpendicular vector from the starting point to the line connecting the two points
-    # w = np.cross(v_norm, np.array([0, 0, 1]))
-    # print(f'test{w} stop TEEEEST')
     # Calculate the cross-track error
     cte = np.sin(tg-np.pi+heading) * v_norm
     lte = np.cos(tg-np.pi+heading) * v_norm
@@ -40,7 +38,7 @@ def c_l_track_error(p1, p2, heading):
     return cte, lte
 
 
-def root_mean_square(target_points,source_points):
+def root_mean_square(target_points, source_points):
     """
     Calculates the root-mean-square (RMS) errors in the North, East, and altitude (up) directions
     between two sets of target and source points.
@@ -60,7 +58,7 @@ def root_mean_square(target_points,source_points):
     rms_e = np.sqrt((np.sum((target_dict['East']-source_dict['East'])**2))/len(source_dict['East']))
     rms_alt = np.sqrt((np.sum((target_dict['alt']-source_dict['alt'])**2))/len(source_dict['alt']))
 
-    return rms_e, rms_n, rms_alt
+    return rms_n, rms_e, rms_alt
 
 
 def standard_deviation(coord_1, coord_2):
@@ -75,36 +73,77 @@ def standard_deviation(coord_1, coord_2):
     - tuple: A tuple containing the standard deviation of N, E, and altitude values between the two sets of coordinates.
     """
     # Extracting the N, E, and altitude values from the two sets of coordinates
-    x1, y1, z1 = coord_1[:,0], coord_1[:,1], coord_1[:,2]
-    x2, y2, z2 = coord_2[:,0], coord_2[:,1], coord_2[:,2]
+    x1, y1, z1 = coord_1[:, 0], coord_1[:, 1], coord_1[:, 2]
+    x2, y2, z2 = coord_2[:, 0], coord_2[:, 1], coord_2[:, 2]
 
     # Calculating the standard deviation of the N, E, and altitude values
-    std_N = np.sqrt(np.sum((x1-x2)**2)/(len(x1)-1))
-    std_E = np.sqrt(np.sum((y1-y2)**2)/(len(y1)-1))
-    std_alt = np.sqrt(np.sum((z1 - z2) ** 2) / (len(z1) - 1))
+    std_n = np.sqrt(np.sum((x1-x2)**2)/(len(x1)-1))
+    std_e = np.sqrt(np.sum((y1-y2)**2)/(len(y1)-1))
+    stdalt = np.sqrt(np.sum((z1 - z2) ** 2) / (len(z1) - 1))
 
     # Returning the tuple containing the standard deviation of N, E, and altitude values
-    return std_N, std_E, std_alt
+    return std_n, std_e, stdalt
+
+
+def area_between_trajectories(target_points, source_points):
+    """
+    Calculates the area between two trajectories.
+
+    This function uses the similaritymeasures package to calculate the area
+    between two trajectories represented by sets of points in 2D space.
+
+    Args:
+        target_points (ndarray): An array of shape (n, 3) representing the
+            points of the target trajectory.
+        source_points (ndarray): An array of shape (m, 3) representing the
+            points of the source trajectory.
+
+    Returns:
+        float: The area between the two trajectories.
+
+    Example:
+        target_points = np.array([[0, 0], [1, 1], [2, 2]])
+        source_points = np.array([[0, 0], [1, 2], [2, 1]])
+        area = area_between_trajectories(target_points, source_points)
+        print(area)  # Output: 0.5
+    """
+    import similaritymeasures
+    exp_data = target_points[:, 0:2]
+    num_data = source_points[:, 0:2]
+    area = similaritymeasures.area_between_two_curves(exp_data, num_data)
+    return area
 
 
 if __name__ == "__main__":
 
     import numpy as np
 
-    target = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\target_coord_2023-03-20_0641.npy")
-    source = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\sbet_coord_2023-03-20_0641.npy")
-    init_target = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\raw_coord_2023-03-20_0641.npy")
-    rms_e_init, rms_n_init, rms_alt_init = np.round(root_mean_square(init_target,target),2)
-    rms_e_target, rms_n_target, rms_alt_target = np.round(root_mean_square(target, source),2)
-    print(f'Init target: {rms_n_init, rms_e_init, rms_alt_init}')
-    print(f'target: {rms_n_target, rms_e_target, rms_alt_target}')
-    std_N, std_E, std_alt = standard_deviation(init_target, source)
-    std_N_tar, std_E_tar,std_alt_tar = standard_deviation(init_target, target)
+    target = np.load("pros_data\\Standalone\\Round2_fulltraj_uncorrected_outliers\\target_coord_2023-04-05_0650.npy")
+    source = np.load("pros_data\\Standalone\\Round2_fulltraj_uncorrected_outliers\\sbet_coord_2023-04-05_0650.npy")
+    init_traj = np.load("pros_data\\Standalone\\Round2_fulltraj_uncorrected_outliers\\raw_coord_2023-04-05_0650.npy")
+    rms_n_init, rms_e_init, rms_alt_init = np.round(root_mean_square(init_traj, target), 2)
+    rms_n_target, rms_e_target, rms_alt_target = np.round(root_mean_square(target, source), 2)
+    rms_n_init_source, rms_e_init_source, rms_alt_init_source = np.round(root_mean_square(init_traj, source), 2)
+
+    print(f'Init vs source: {rms_n_init_source, rms_e_init_source, rms_alt_init_source}')
+    print(f'target vs source: {rms_n_target, rms_e_target, rms_alt_target}')
+    print(f'init vs target: {rms_n_init, rms_e_init, rms_alt_init}')
+
+    std_N, std_E, std_alt = standard_deviation(init_traj, source)
+    std_N_tar, std_E_tar, std_alt_tar = standard_deviation(init_traj, target)
     import numpy as np
     import similaritymeasures
+    area_target_init_traj = np.round(area_between_trajectories(init_traj, target), 2)
+    area_target_source = np.round(area_between_trajectories(target, source), 2)
+    area_init_traj_source = np.round(area_between_trajectories(init_traj, source), 2)
+    print(f'Area between trajectories for initial trajectory vs true trajectory {area_init_traj_source} m^2')
+    print(f'Area between trajectories for target trajectory vs true trajectory {area_target_source} m^2')
+    print(f'Area between trajectories for initial traj vs target trajectory {area_target_init_traj} m^2')
+
+    """
     import matplotlib.pyplot as plt
 
-    exp_data = init_target[:,0:2]
+    exp_data = target[:,0:2]
     num_data = source[:,0:2]
     xi, eta, xiP, etaP = similaritymeasures.normalizeTwoCurves(exp_data[:,0], exp_data[:,1], num_data[:,0], num_data[:,1])
     # exp_data = np.array((xi,eta))
@@ -128,9 +167,9 @@ if __name__ == "__main__":
     mae = similaritymeasures.mae(exp_data, num_data)
     # mean squared error
     mse = similaritymeasures.mse(exp_data, num_data)
-
+    
     # print the results
-    print(pcm, df, area, cl, dtw, mae, mse)
+    print(area, mse)
 
     # plot the data
     plt.figure()
@@ -140,6 +179,7 @@ if __name__ == "__main__":
 
     ## And much more!
 
+    """
     """
     from sklearn.metrics import r2_score
     from scipy.spatial.distance import cdist

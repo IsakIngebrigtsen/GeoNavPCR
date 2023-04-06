@@ -6,6 +6,8 @@ import absolute_navigator_ICP as Pr
 from collect_filename import get_files
 import open3d as o3d
 import draw_registration
+
+
 def remove_outside_source(source_pc, target_pc, meters = 25):
     init_pos = target_pc.get_center()
     # Extract a part of the cloud around the actual position. This is the cloud we are going to register against.

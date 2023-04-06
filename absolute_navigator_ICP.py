@@ -54,7 +54,7 @@ def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviat
     # Process point cloud data with Open3D
     pc_o3d = point_cloud_pros(point_cloud_prossesing)
     r = pc_o3d.get_rotation_matrix_from_xyz((0, 0, quadrant(init_pos['heading'])))  # Open3d
-    pc_o3d.rotate(r, center=(0,0,0))  # open3d
+    pc_o3d.rotate(r, center=(0, 0, 0))  # open3d
     initial_origin = pc_o3d.get_center()
     pc_o3d = pc_o3d.translate([0, 0, 0], relative=False)  # open3d
 
@@ -232,8 +232,10 @@ def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_va
         return transformation, reg_p2l.inlier_rmse
     else:
         icp_algorithm = pipelines.registration.TransformationEstimationPointToPlane()
+        print('Point to Plane')
     reg_p2l = pipelines.registration.registration_icp(
         init_target, init_source, threshold_value, transformation, icp_algorithm, convergence)
+
     for i in range(iterations - 1):
         reg_p2l = pipelines.registration.registration_icp(
             init_target, init_source, threshold_value, transformation, icp_algorithm, convergence)
@@ -389,7 +391,7 @@ if __name__ == "__main__":
     import copy
     import time
     from collect_filename import get_files
-    from Quality_Controll import c_l_track_error, root_mean_square
+    from Quality_Controll import c_l_track_error, root_mean_square, area_between_trajectories
     import draw_registration
     # Grab Currrent Time Before Running the Code
     start = time.time()
@@ -397,15 +399,15 @@ if __name__ == "__main__":
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
     system_folder = "Round1"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
-    file_list = get_files(30, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    file_list = get_files(19, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
     from_frame = 100
-    to_frame = 104
-    skips = 1
-    sbet_process = "ETPOS"  # Choose between SBET_prosess "PPP" or "ETPOS"
-    standalone = False  # if True a 1.5 meters deviation is added to the sbet data.
+    to_frame = 125
+    skips = 3
+    sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
+    standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
     save_data = True
     print_point_cloud = False
-    handle_outliers = False
+    handle_outliers = True
     algorithm = "Point2Plane"
     seed = 1
     import sys
@@ -426,7 +428,7 @@ if __name__ == "__main__":
     movement_target = []
     initial_coordinate = []
     outliers = {}
-
+    inlier_rms = []
     """
     # Source NDH
     # source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\NDH-Lillehammer.laz"
@@ -514,6 +516,7 @@ if __name__ == "__main__":
             trans_init, rmse = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9, model=algorithm)  # Perform ICP on downsampled data
             trans_init, init_inlier_rmse = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1, model=algorithm)  # Perform ICP on the whole dataset.
             print(f'inlier_RMSE :{np.round(init_inlier_rmse,3)}')
+            inlier_rms.append(init_inlier_rmse)
             # Remove outlisers, if the point cloud registration says to move more than 3 times the standard deviation
             # of the initial coordinate, the initial coordinate is initiates as the true coordinate.
             if handle_outliers is True:
@@ -552,7 +555,7 @@ if __name__ == "__main__":
             movement_target.append(movement)
             # Plotting the target point cloud against the source point cloud
             if print_point_cloud is True:
-                source_for_plotting = source_transformed.voxel_down_sample(voxel_size=0.2)
+                source_for_plotting = source_transformed.voxel_down_sample(voxel_size=0.1)
                 draw_registration.draw_absolute_registration_result(source_for_plotting, target_transformed, target_transformed.get_center() - origo)
 
             trans_matrix.append(np.mean(trans_init))  # stores all transformation matrixes.
@@ -650,6 +653,10 @@ if __name__ == "__main__":
     rms_n_init, rms_e_init, rms_alt_init = np.round(root_mean_square(raw_coord, sbet_coord), 3)
     rms_n_target, rms_e_target, rms_alt_target = np.round(root_mean_square(target_coord, sbet_coord), 3)
     rms_n_target_v_init, rms_e_target_v_init, rms_alt_target_v_init = np.round(root_mean_square(raw_coord, target_coord), 3)
+    area_target_init_traj = np.round(area_between_trajectories(raw_coord, target_coord), 2)
+    area_target_source = np.round(area_between_trajectories(target_coord, sbet_coord), 2)
+    area_init_traj_source = np.round(area_between_trajectories(raw_coord, sbet_coord), 2)
+    # draw_las(source_transformed, "source.las")
 
     #%% Plot the data as subplots.
     import matplotlib.pyplot as plt
@@ -669,10 +676,10 @@ if __name__ == "__main__":
         print(f'The file is not corrected for outliers')
     else:
         print('There are no outliers after the point cloud registration')
-    plt.style.use('bmh')
+    plt.style.use('fivethirtyeight')
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
     fig.set_size_inches(30, 30, forward=True)
-    line1 = f'Estimated deviation between the cars trajectory against the true trajectory'
+    line1 = f'Estimated deviation between the target trajectory against the true trajectory'
     std_dist = np.sqrt(std[:, 0]**2+std[:, 1]**2)
     line2 = f'Average distanse error is {np.round(average_distance_target,2)} m, and before the registration: {np.round(average_distance_before,2)} m'
     line3 = f'Based on the files {file_list}'
@@ -681,8 +688,8 @@ if __name__ == "__main__":
     line6 = f'Target trajectory = trajectory after prosessing trough point cloud registration'
 
     fig.suptitle(line1 + '\n' + line2 + "\n" + line3 + "\n" + line4 + '\n' + line5 + '\n' + line6)
-    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1], '-bo')
-    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1], '-ro')
+    ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1])  # , '-bo')
+    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1])  # , '-ro')
     ax1.set_title("Target trajectory against true trajectory", loc='center', wrap=True)
     # ax1.grid()
     ax1.set_xlabel("East (m)")
@@ -763,9 +770,13 @@ if __name__ == "__main__":
         text_file.write(f'processed the file {file_list}, with the frames {from_frame} to {to_frame},with {skips} skips, and it took {total_time} seconds\n')
         text_file.write(f'Thats {np.round(total_time/60,2)} minutes or {np.round(total_time/(60*60),2)} hours\n\n\n')
 
-        text_file.write(f'RMSE value for initial coordinates: {rms_n_init, rms_e_init, rms_alt_init}\n')
-        text_file.write(f'RMSE value for estimated coordinates after point cloud registration:{rms_n_target, rms_e_target, rms_alt_target} \n')
-        text_file.write(f'RMSE value for initial coordinates against estimated coordinates: {rms_n_target_v_init, rms_e_target_v_init, rms_alt_target_v_init} \n\n\n')
+        text_file.write(f'RMSE value for initial traj against true traj: {rms_n_init, rms_e_init, rms_alt_init} (n,e,alt)\n')
+        text_file.write(f'RMSE value for target traj against true traj:{rms_n_target, rms_e_target, rms_alt_target} (n,e,alt)\n')
+        text_file.write(f'RMSE value for initial traj against target traj: {rms_n_target_v_init, rms_e_target_v_init, rms_alt_target_v_init} (n,e,alt)\n\n\n')
+
+        text_file.write(f'Area between trajectories for initial trajectory vs true trajectory {area_init_traj_source} m^2\n')
+        text_file.write(f'Area between trajectories for target trajectory vs true trajectory {area_target_source} m^2\n')
+        text_file.write(f'Area between trajectories for initial traj vs target trajectory {area_target_init_traj} m^2\n\n\n')
 
         text_file.write(line1)
         text_file.write("\n")
@@ -794,6 +805,5 @@ if __name__ == "__main__":
             text_file.write('The results are not corrected for outliers')
         else:
             text_file.write('There are no outliers after the point cloud registration')
-
 
         text_file.close()
