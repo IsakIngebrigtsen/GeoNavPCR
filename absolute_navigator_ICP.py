@@ -399,10 +399,11 @@ if __name__ == "__main__":
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
     system_folder = "Round1"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
-    file_list = get_files(19, 1, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
-    from_frame = 100
-    to_frame = 125
-    skips = 3
+    section = "Rural"  # Full, Forest, Rural, Dense
+    file_list = get_files(36, 4, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    from_frame = 1
+    to_frame = 198
+    skips = 1
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
     save_data = True
@@ -417,8 +418,8 @@ if __name__ == "__main__":
     std = []
     std_raw = []
     target_coord = []
-    sbet_coord = []
-    raw_coord = []
+    true_coord = []
+    initial_coord = []
     full_sbet = []
     timesteps = []
     trans_matrix = []
@@ -429,13 +430,14 @@ if __name__ == "__main__":
     initial_coordinate = []
     outliers = {}
     inlier_rms = []
+    num_outliers = 0
     """
     # Source NDH
-    # source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\NDH-Lillehammer.laz"
+    source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\NDH-Lillehammer.laz"
     # Transformes the Laz file into Open 3d point cloud.
-    # pc_raw_laz = read_laz(source_init)
-    # pc_o3d_laz = point_cloud_pros(pc_raw_laz)
-    # source_pc_numpy = pc_raw_laz  # Point cloud in open3d python format.
+    pc_raw_laz = read_laz(source_init)
+    pc_o3d_laz = point_cloud_pros(pc_raw_laz)
+    source_pc_numpy = pc_raw_laz  # Point cloud in open3d python format.
     """
     # Load the full point cloud used as source for the point cloud registration
     source_pc_numpy = np.load('C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\full_source_PC_np.npy')
@@ -521,21 +523,27 @@ if __name__ == "__main__":
             # of the initial coordinate, the initial coordinate is initiates as the true coordinate.
             if handle_outliers is True:
                 if init_inlier_rmse > 0.20:
+                    print('This is an outlier')
+                    frame_outlier = [frame_index, f'Inlier RMSE: {np.round(init_inlier_rmse, 3)}']
+                    frame_outlier_list.append(frame_outlier)
+                    outlier = True
+                    num_outliers += 1
+                    """
                     print(f'Warning: high RMSE value, continue ICP to converge for frame {frame_index} in file {files}')
-                    # algorithm = 'Point2Point'
-                    # trans_init = np.identity(4)  # initial transformation matrix
+
                     trans_init, rmse = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9,
                                                model=algorithm)  # Perform ICP on downsampled data
                     trans_init, inlier_rmse = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1,
                                                       model=algorithm)  # Perform ICP on the whole dataset.
                     print(f'inlier_RMSE :{np.round(inlier_rmse,3)}')
                     if inlier_rmse >= init_inlier_rmse-0.03 or inlier_rmse >= 0.25:
-                        print('OHmygahd its an outlier')
+                        print('This is an outlier')
                         frame_outlier = [frame_index, f'Inlier RMSE: {np.round(inlier_rmse,3)}']
                         frame_outlier_list.append(frame_outlier)
                         outlier = True
-                        continue
-
+                        num_outliers += 1
+                        # continue
+                    """
             # Save the initial coordinate and the timesteps
             timesteps.append(initial_position['time_est'])  # collects all timesteps
             initial_coordinate.append(init_coord)
@@ -598,8 +606,8 @@ if __name__ == "__main__":
             std.append(deviation)
             std_raw.append(pre_activation)
             target_coord.append(target_ICP_center)
-            sbet_coord.append(true_coordinates_UTM)
-            raw_coord.append(init_coord)
+            true_coord.append(true_coordinates_UTM)
+            initial_coord.append(init_coord)
             cross_track.append(cte)
             long_track.append(lte)
             end_frame = time.time()
@@ -611,9 +619,9 @@ if __name__ == "__main__":
     sbet_full = np.reshape(full_sbet, (-1, 3))
     std = np.reshape(std, (-1, 3))
     std_raw = np.reshape(std_raw, (-1, 3))
-    sbet_coord = np.reshape(sbet_coord, (-1, 3))
+    true_coord = np.reshape(true_coord, (-1, 3))
     target_coord = np.reshape(target_coord, (-1, 3))
-    raw_coord = np.reshape(raw_coord, (-1, 3))
+    initial_coord = np.reshape(initial_coord, (-1, 3))
     initial_coordinate = np.reshape(initial_coordinate, (-1, 3))
     movement_target = np.reshape(movement_target, (-1, 3))
 
@@ -646,16 +654,26 @@ if __name__ == "__main__":
     """
     # Use K nearest neighbour to find the shortest distance between the True trajectory and the target trajectory
     import scipy
-    tree = scipy.spatial.cKDTree(sbet_coord[:, 0:2])
-    nearest_raw, ii = tree.query(raw_coord[:, 0:2])
+    tree = scipy.spatial.cKDTree(true_coord[:, 0:2])
+    nearest_raw, ii = tree.query(initial_coord[:, 0:2])
     nearest_referanced, jj = tree.query(target_coord[:, 0:2])
 
-    rms_n_init, rms_e_init, rms_alt_init = np.round(root_mean_square(raw_coord, sbet_coord), 3)
-    rms_n_target, rms_e_target, rms_alt_target = np.round(root_mean_square(target_coord, sbet_coord), 3)
-    rms_n_target_v_init, rms_e_target_v_init, rms_alt_target_v_init = np.round(root_mean_square(raw_coord, target_coord), 3)
-    area_target_init_traj = np.round(area_between_trajectories(raw_coord, target_coord), 2)
-    area_target_source = np.round(area_between_trajectories(target_coord, sbet_coord), 2)
-    area_init_traj_source = np.round(area_between_trajectories(raw_coord, sbet_coord), 2)
+    rms_n_init, rms_e_init, rms_alt_init = np.round(root_mean_square(initial_coord, true_coord), 2)
+    rms_n_target, rms_e_target, rms_alt_target = np.round(root_mean_square(target_coord, true_coord), 2)
+    rms_n_target_v_init, rms_e_target_v_init, rms_alt_target_v_init = np.round(root_mean_square(initial_coord, target_coord), 2)
+    area_target_init_traj = np.round(area_between_trajectories(initial_coord, target_coord), 2)
+    area_target_source = np.round(area_between_trajectories(target_coord, true_coord), 2)
+    area_init_traj_source = np.round(area_between_trajectories(initial_coord, true_coord), 2)
+
+    dev_plane_target_source = np.round(np.percentile(np.sqrt((target_coord[:, 0] - true_coord[:, 0]) ** 2 + (target_coord[:, 2] - true_coord[:, 2]) ** 2), 95), 3)
+    dev_height_target_source = np.round(np.percentile(np.sqrt((target_coord[:, 2] - true_coord[:, 2]) ** 2), 95), 3)
+
+    dev_plane_init_source = np.round(np.percentile(np.sqrt((initial_coord[:, 0] - true_coord[:, 0]) ** 2 + (initial_coord[:, 2] - true_coord[:, 2]) ** 2), 95), 3)
+    dev_height_init_source = np.round(np.percentile(np.sqrt((initial_coord[:, 2] - true_coord[:, 2]) ** 2), 95), 3)
+
+    dev_plane_init_target = np.round(np.percentile(np.sqrt((initial_coord[:, 0] - target_coord[:, 0]) ** 2 + (initial_coord[:, 2] - target_coord[:, 2]) ** 2), 95), 3)
+    dev_height_init_target = np.round(np.percentile(np.sqrt((initial_coord[:, 2] - target_coord[:, 2]) ** 2), 95), 3)
+
     # draw_las(source_transformed, "source.las")
 
     #%% Plot the data as subplots.
@@ -689,24 +707,24 @@ if __name__ == "__main__":
 
     fig.suptitle(line1 + '\n' + line2 + "\n" + line3 + "\n" + line4 + '\n' + line5 + '\n' + line6)
     ax1.plot(target_coord[:, 0] - target_coord[0, 0], target_coord[:, 1] - target_coord[0, 1])  # , '-bo')
-    ax1.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1])  # , '-ro')
+    ax1.plot(true_coord[:, 0] - target_coord[0, 0], true_coord[:, 1] - target_coord[0, 1])  # , '-ro')
     ax1.set_title("Target trajectory against true trajectory", loc='center', wrap=True)
     # ax1.grid()
     ax1.set_xlabel("East (m)")
     ax1.set_ylabel("North (m)")
     ax1.legend(["Target trajectory", "True trajectory"])
 
-    ax2.plot(raw_coord[:, 0]-target_coord[0, 0], raw_coord[:, 1]-target_coord[0, 1])  # , color='green')
-    ax2.plot(sbet_coord[:, 0]-target_coord[0, 0], sbet_coord[:, 1]-target_coord[0, 1])  # , color='red')
+    ax2.plot(initial_coord[:, 0] - target_coord[0, 0], initial_coord[:, 1] - target_coord[0, 1], '-ro')  # , color='green')
+    ax2.plot(true_coord[:, 0] - target_coord[0, 0], true_coord[:, 1] - target_coord[0, 1], '-bo')  # , color='red')
     ax2.set_title("PPP trajectory against True trajectory", loc='center', wrap=True)
     # ax2.grid()
     ax2.set_xlabel("East (m)")
     ax2.set_ylabel("North (m)")
     ax2.legend(["PPP trajectory", "True trajectory"])
 
-    dev_x = target_coord[:, 0] - raw_coord[:, 0]
-    dev_y = target_coord[:, 1] - raw_coord[:, 1]
-    dev_z = target_coord[:, 2] - raw_coord[:, 2]
+    dev_x = target_coord[:, 0] - initial_coord[:, 0]
+    dev_y = target_coord[:, 1] - initial_coord[:, 1]
+    dev_z = target_coord[:, 2] - initial_coord[:, 2]
     x_time = np.asarray(timesteps) - np.asarray(timesteps[0])
     ax3.plot(x_time, cross_track, label="Cross Track Error")
     ax3.plot(x_time, long_track, label="Long track error")
@@ -721,19 +739,22 @@ if __name__ == "__main__":
     ax3.legend()
 
     # ax4.plot(x_time, nearest_raw, color="green")
-    ax4.plot(x_time, nearest_referanced)
-
+    # ax4.plot(x_time, nearest_referanced)
+    # ax4.plot(x_time, raw_coord[:, 0]-sbet_coord[:, 0])
+    # ax4.plot(x_time, raw_coord[:, 1]-sbet_coord[:, 1])
+    # ax4.plot(x_time, dev_x)
+    # ax4.plot(x_time, dev_y)
     dev = np.sqrt(std[:, 0]**2+std[:, 1]**2)
     st = []
 
-    # ax4.plot(x_time, dev)
-    # ax4.plot(x_time, dev_z, color="red")
+    ax4.plot(x_time, dev)
+    ax4.plot(x_time, dev_z, color="red")
     # res = stats.linregress(timesteps, st)
 
     ax4.set_title("Deviation error in 2D from the true trajectory", loc='center', wrap=True)
     ax4.set_xlabel("Frames")
     ax4.set_ylabel("Deviation (m)")
-    ax4.set_ylim([-0.2, 1.5])
+    # ax4.set_ylim([-0.2, 1.5])
     ax4.axhline(y=0.0, color='black', linestyle='-')
     # ax4.set_xticks(1, len(nearest_raw))
     ax4.legend(["PPP trajectory", "Nearest trajectory", "Nearest trajectory based on time", "Deviation in height"])
@@ -753,23 +774,31 @@ if __name__ == "__main__":
         fig.savefig('plots\\Estimatation' + time.strftime("%Y-%m-%d %H%M%S") + '.png')
 
         # Save the data as arrays
-        true_filename = 'pros_data\\true_trajectory_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
-        sbet_filename = 'pros_data\\sbet_coord_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
-        raw_filename = 'pros_data\\raw_coord_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
-        target_filename = 'pros_data\\target_coord_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
+        # true_filename = 'pros_data\\true_trajectory_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
+        sbet_filename = 'pros_data\\true_trajectory_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
+        raw_filename = 'pros_data\\initial_trajectory_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
+        target_filename = 'pros_data\\target_trajectory_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
         heading_filename = 'pros_data\\heading_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
         np.save(heading_filename, direction)
         # np.save(true_filename, true_trajectory)
-        np.save(sbet_filename, sbet_coord)
-        np.save(raw_filename, raw_coord)
+        np.save(sbet_filename, true_coord)
+        np.save(raw_filename, initial_coord)
         np.save(target_filename, target_coord)
 
         file_name = 'info_script_' + time.strftime("%Y-%m-%d-%H%M") + '_from_file ' + file_list[0]+'.txt'
         text_file = open('pros_data\\' + file_name, "w")
+        if standalone is True:
+            GNSS_system = "Standalone"
+        else:
+            GNSS_system = "PPP"
+
+        text_file.write(f'Processing of the following trajectory:{section}, from {system_folder} with initial trajectory {GNSS_system}\n')
+        text_file.write(f'And algorithm {algorithm}')
+
         text_file.write("\n")
         text_file.write(f'processed the file {file_list}, with the frames {from_frame} to {to_frame},with {skips} skips, and it took {total_time} seconds\n')
         text_file.write(f'Thats {np.round(total_time/60,2)} minutes or {np.round(total_time/(60*60),2)} hours\n\n\n')
-
+        text_file.write(f'Total number of frames are {len(initial_coordinate[:,0])}, with average time of {total_time/len(initial_coordinate[:,0])} per frame\n\n\n')
         text_file.write(f'RMSE value for initial traj against true traj: {rms_n_init, rms_e_init, rms_alt_init} (n,e,alt)\n')
         text_file.write(f'RMSE value for target traj against true traj:{rms_n_target, rms_e_target, rms_alt_target} (n,e,alt)\n')
         text_file.write(f'RMSE value for initial traj against target traj: {rms_n_target_v_init, rms_e_target_v_init, rms_alt_target_v_init} (n,e,alt)\n\n\n')
@@ -777,6 +806,13 @@ if __name__ == "__main__":
         text_file.write(f'Area between trajectories for initial trajectory vs true trajectory {area_init_traj_source} m^2\n')
         text_file.write(f'Area between trajectories for target trajectory vs true trajectory {area_target_source} m^2\n')
         text_file.write(f'Area between trajectories for initial traj vs target trajectory {area_target_init_traj} m^2\n\n\n')
+
+        text_file.write(f'95% percentile initial trajectory vs true trajectory {dev_plane_init_source} m in 2d and  {dev_height_init_source}m in height\n ')
+        text_file.write(f'95% percentile initial trajectory vs true trajectory {dev_plane_target_source} m in 2d and  {dev_height_target_source}m in height\n ')
+        text_file.write(f'95% percentile initial trajectory vs true trajectory {dev_plane_init_target} m in 2d and  {dev_height_init_target}m in height\n ')
+
+        if bool(outliers) is True:
+            text_file.write(f'Total number of outliers are {num_outliers}, {(num_outliers/len(initial_coordinate[:,0]))*100}% of the total number of frames\n\n\n')
 
         text_file.write(line1)
         text_file.write("\n")
@@ -788,8 +824,8 @@ if __name__ == "__main__":
         text_file.write("\n")
         text_file.write(line5)
         text_file.write("\n")
-        text_file.write('True trajectory filename: ' + true_filename)
-        text_file.write("\n")
+        # text_file.write('True trajectory filename: ' + true_filename)
+        # text_file.write("\n")
         text_file.write('SBET trajectory filename, that match with timestamps: ' + sbet_filename)
         text_file.write("\n")
         text_file.write('PPP trajectory filename: ' + raw_filename)
