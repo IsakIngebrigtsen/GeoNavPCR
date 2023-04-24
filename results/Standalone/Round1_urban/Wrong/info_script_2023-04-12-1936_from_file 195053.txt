@@ -1,0 +1,25 @@
+Processing of the following trajectory:Dense, from Round1 with initial trajectory Standalone
+And algorithm Point2Plane
+processed the file ['195053', '195115', '195136', '195157', '195218', '195239', '195300', '195321', '195342', '195403'], with the frames 1 to 198,with 3 skips, and it took 7428.5963 seconds
+Thats 123.81 minutes or 2.06 hours
+
+
+RMSE value for initial traj against true traj: (2.075, 2.377, 0.178) (n,e,alt)
+RMSE value for target traj against true traj:(0.93, 1.264, 0.251) (n,e,alt)
+RMSE value for initial traj against target traj: (1.918, 2.21, 0.389) (n,e,alt)
+
+
+Area between trajectories for initial trajectory vs true trajectory 1492.07 m^2
+Area between trajectories for target trajectory vs true trajectory 146.55 m^2
+Area between trajectories for initial traj vs target trajectory 1710.92 m^2
+
+
+Estimated deviation between the target trajectory against the true trajectory
+Average distanse error is 0.24 m, and before the registration: 1.75 m
+Based on the files ['195053', '195115', '195136', '195157', '195218', '195239', '195300', '195321', '195342', '195403']
+From frame 1 to frame 198 with 2 skips
+min deviation error is 0.004 m and max:8.111m
+SBET trajectory filename, that match with timestamps: pros_data\true_trajectory_2023-04-12_1936.npy
+PPP trajectory filename: pros_data\initial_trajectory_2023-04-12_1936.npy
+Georefferenced processed Target filename: pros_data\target_trajectory_2023-04-12_1936.npy
+The results are not corrected for outliers
