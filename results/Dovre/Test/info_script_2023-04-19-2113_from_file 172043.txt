@@ -1,4 +1,4 @@
-Processing of the following trajectory:Full, from Round3 with initial trajectory PPP
+Processing of the following trajectory:Full, from Round3 with initial trajectory ETPOS
 And algorithm Point2Plane
 processed the file ['172043', '172104', '172125', '172146', '172207', '172228'], with the frames 1 to 398,with 30 skips, and it took 490.8581 seconds
 Thats 8.18 minutes or 0.14 hours
