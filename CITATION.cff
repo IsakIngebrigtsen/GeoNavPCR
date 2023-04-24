@@ -1,0 +1,18 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: GeoNavPCR
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Isak Foss
+    family-names: Ingebrigtsen
+    email: fossingebrigtsen@gmail.com
+    name-particle: Isak Foss
+license: MIT
+commit: d403e2bde690786c7b0009a5c364542e0d04bdc9
+version: 0.0.1
+date-released: '2023-05-15'
