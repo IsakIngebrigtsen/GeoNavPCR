@@ -1,0 +1,37 @@
+Processing of the following trajectory:Forest, from Round1 with initial trajectory Standalone
+And algorithm Point2Plane
+processed the file ['194723', '194744', '194805'], with the frames 1 to 198,with 1 skips, and it took 9216.4825 seconds
+Thats 153.61 minutes or 2.56 hours
+
+
+Total number of frames are 588, with average time of 15.674289965986395 per frame
+
+
+RMSE value for initial traj against true traj: (2.063, 2.37, 0.381) (n,e,alt)
+RMSE value for target traj against true traj:(3.975, 2.774, 0.473) (n,e,alt)
+RMSE value for initial traj against target traj: (4.651, 3.556, 0.727) (n,e,alt)
+
+
+Area between trajectories for initial trajectory vs true trajectory 697.43 m^2
+Area between trajectories for target trajectory vs true trajectory 736.6 m^2
+Area between trajectories for initial traj vs target trajectory 1874.69 m^2
+
+95% percentile initial trajectory vs true trajectory 4.306 m in 2d and  0.495m in height
+95% percentile target trajectory vs true trajectory 3.832 m in 2d and  0.685m in height
+95% percentile initial trajectory vs target trajectory 5.075 m in 2d and  1.052m in height
+
+
+Total number of outliers are 56, 9.523809523809524% of the total number of frames
+
+
+Estimated deviation between the target trajectory against the true trajectory
+Average distanse error is 0.7 m, and before the registration: 1.51 m
+Based on the files ['194723', '194744', '194805']
+From frame 1 to frame 198 with 0 skips
+min deviation error is 0.02 m and max:28.778m
+SBET trajectory filename, that match with timestamps: pros_data\true_trajectory_2023-04-14_1151.npy
+PPP trajectory filename: pros_data\initial_trajectory_2023-04-14_1151.npy
+Georefferenced processed Target filename: pros_data\target_trajectory_2023-04-14_1151.npy
+The outliers of the file are frames where the inlier RMSE value is higher than 0.25m after 
+ An initial attempt to converge the outliers
+{'194723': [[34, 'Inlier RMSE: 0.221'], [100, 'Inlier RMSE: 0.474'], [101, 'Inlier RMSE: 0.25'], [105, 'Inlier RMSE: 0.336'], [111, 'Inlier RMSE: 0.242'], [113, 'Inlier RMSE: 0.273'], [115, 'Inlier RMSE: 0.231'], [120, 'Inlier RMSE: 0.28'], [124, 'Inlier RMSE: 0.272'], [125, 'Inlier RMSE: 0.29'], [128, 'Inlier RMSE: 0.401'], [129, 'Inlier RMSE: 0.356'], [130, 'Inlier RMSE: 0.383'], [131, 'Inlier RMSE: 0.4'], [132, 'Inlier RMSE: 0.32'], [133, 'Inlier RMSE: 0.36'], [134, 'Inlier RMSE: 0.334'], [135, 'Inlier RMSE: 0.328'], [136, 'Inlier RMSE: 0.355'], [137, 'Inlier RMSE: 0.36'], [138, 'Inlier RMSE: 0.322'], [139, 'Inlier RMSE: 0.383'], [140, 'Inlier RMSE: 0.354'], [141, 'Inlier RMSE: 0.357'], [142, 'Inlier RMSE: 0.415'], [143, 'Inlier RMSE: 0.342'], [144, 'Inlier RMSE: 0.34'], [145, 'Inlier RMSE: 0.332'], [146, 'Inlier RMSE: 0.34'], [147, 'Inlier RMSE: 0.278'], [148, 'Inlier RMSE: 0.297'], [149, 'Inlier RMSE: 0.225'], [153, 'Inlier RMSE: 0.38'], [158, 'Inlier RMSE: 0.261'], [163, 'Inlier RMSE: 0.3'], [166, 'Inlier RMSE: 0.246'], [174, 'Inlier RMSE: 0.205'], [175, 'Inlier RMSE: 0.256'], [185, 'Inlier RMSE: 0.263'], [186, 'Inlier RMSE: 0.269'], [187, 'Inlier RMSE: 0.258'], [188, 'Inlier RMSE: 0.268'], [190, 'Inlier RMSE: 0.271'], [192, 'Inlier RMSE: 0.303'], [193, 'Inlier RMSE: 0.244']], '194744': [[1, 'Inlier RMSE: 0.28'], [9, 'Inlier RMSE: 0.246'], [24, 'Inlier RMSE: 0.281'], [30, 'Inlier RMSE: 0.301'], [56, 'Inlier RMSE: 0.354'], [59, 'Inlier RMSE: 0.284'], [65, 'Inlier RMSE: 0.293'], [67, 'Inlier RMSE: 0.314']], '194805': [[149, 'Inlier RMSE: 0.524'], [170, 'Inlier RMSE: 0.371'], [177, 'Inlier RMSE: 0.491']]}

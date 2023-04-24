@@ -1,0 +1,32 @@
+Processing of the following trajectory:Full, from Round2 with initial trajectory PPP
+And algorithm Point2Plane
+processed the file ['200102', '200123', '200144', '200205', '200226', '200247', '200308', '200329', '200350', '200411', '200432', '200454', '200515', '200536', '200557', '200618', '200639', '200700', '200721', '200742', '200803', '200824', '200845', '200906', '200927', '200948', '201009', '201030', '201051', '201112', '201133', '201154', '201215', '201236', '201257', '201318', '201339', '201400', '201421', '201442', '201503', '201524'], with the frames 1 to 198,with 3 skips, and it took 28704.5867 seconds
+Thats 478.41 minutes or 7.97 hours
+
+
+Total number of frames are 2739, with average time of 10.47995133260314 per frame
+
+
+RMSE value for initial traj against true traj: (0.1, 0.18, 0.16) (n,e,alt)
+RMSE value for target traj against true traj:(1.59, 0.7, 0.24) (n,e,alt)
+RMSE value for initial traj against target traj: (1.57, 0.75, 0.31) (n,e,alt)
+
+
+Area between trajectories for initial trajectory vs true trajectory 701.82 m^2
+Area between trajectories for target trajectory vs true trajectory 1129.39 m^2
+Area between trajectories for initial traj vs target trajectory 1558.27 m^2
+
+95% percentile initial trajectory vs true trajectory 0.36 m in 2d and  0.276m in height
+95% percentile target trajectory vs true trajectory 0.509 m in 2d and  0.407m in height
+95% percentile initial trajectory vs target trajectory 0.688 m in 2d and  0.522m in height
+
+
+Estimated deviation between the target trajectory against the true trajectory
+Average distanse error is 0.29 m, and before the registration: 0.2 m
+Based on the files ['200102', '200123', '200144', '200205', '200226', '200247', '200308', '200329', '200350', '200411', '200432', '200454', '200515', '200536', '200557', '200618', '200639', '200700', '200721', '200742', '200803', '200824', '200845', '200906', '200927', '200948', '201009', '201030', '201051', '201112', '201133', '201154', '201215', '201236', '201257', '201318', '201339', '201400', '201421', '201442', '201503', '201524']
+From frame 1 to frame 198 with 2 skips
+min deviation error is 0.004 m and max:13.722m
+SBET trajectory filename, that match with timestamps: pros_data\true_trajectory_2023-04-16_1230.npy
+PPP trajectory filename: pros_data\initial_trajectory_2023-04-16_1230.npy
+Georefferenced processed Target filename: pros_data\target_trajectory_2023-04-16_1230.npy
+The results are not corrected for outliers

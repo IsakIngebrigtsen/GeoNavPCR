@@ -22,7 +22,7 @@ def transform_mapprojection(crs_from=4937, crs_to=5972):
     return Transformer.from_crs(crs_from, crs_to), currentepoch
 
 
-def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviation, crs_epsg):
+def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviation, crs_epsg, seed_input):
     """
     Transform a point cloud from a PCAP file to UTM32 coordinates and process it using Open3D.
 
@@ -34,6 +34,7 @@ def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviat
         init_pos (dict): Initial position of the lidar in latitude, longitude, altitude, and heading.
         random_deviation (bool): If True, add a random deviation to the UTM coordinates.
         crs_epsg (int): EPSG value for the initial transformation of initial coordinates
+        seed_input (int): initial Seed value of the parameters
     Returns:
         Tuple containing the transformed point cloud, the initial UTM32 coordinates, and the initial origin of the point cloud.
 
@@ -49,7 +50,7 @@ def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviat
     raw_pointcloud = get_frame(pcap_raw, metadata, frame)  # PCAP Software
     raw_pointcloud_correct_shape = raw_pointcloud.reshape((-1, 3))
     point_cloud_prossesing = pcap_process.remove_vehicle(raw_pointcloud_correct_shape)  # Erlend Dahl Teapot removes vehicle
-    point_cloud_prossesing = pcap_process.remove_outside_distance(40, point_cloud_prossesing)  # Erlend Dahl Teapot
+    point_cloud_prossesing = pcap_process.remove_outside_distance(35, point_cloud_prossesing)  # Erlend Dahl Teapot
 
     # Process point cloud data with Open3D
     pc_o3d = point_cloud_pros(point_cloud_prossesing)
@@ -63,10 +64,14 @@ def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviat
     e_init, n_init, h_init, ep_init = pyproj.transform(init_pos['lat'], init_pos['lon'], init_pos['alt'], e)
     if random_deviation is True:
         # Put in a seed to get a consistent result.
-        random_deviation = random.normal(-1.5, 1.5)
+        random.seed(seed_input)
+        random_deviation_e = random.normal(0, 1.5)
+        random_deviation_n = random.normal(0, 1.5)
+        # random_deviation_alt = random.normal(0, 1.5)
     else:
-        random_deviation = 0
-    center_coord_utm32 = array([e_init + random_deviation, n_init + random_deviation, h_init])
+        random_deviation_e = 0
+        random_deviation_n = 0
+    center_coord_utm32 = array([e_init + random_deviation_e, n_init + random_deviation_n, h_init])
     pc_transformed_utm = pc_o3d.translate(center_coord_utm32, relative=False)  # open3d
 
     return pc_transformed_utm, center_coord_utm32, initial_origin
@@ -232,7 +237,7 @@ def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_va
         return transformation, reg_p2l.inlier_rmse
     else:
         icp_algorithm = pipelines.registration.TransformationEstimationPointToPlane()
-        print('Point to Plane')
+
     reg_p2l = pipelines.registration.registration_icp(
         init_target, init_source, threshold_value, transformation, icp_algorithm, convergence)
 
@@ -240,8 +245,9 @@ def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_va
         reg_p2l = pipelines.registration.registration_icp(
             init_target, init_source, threshold_value, transformation, icp_algorithm, convergence)
         # Check for convergence
-        if i > 1 and np.abs(np.mean(reg_p2l.transformation[0:3, 3]-transformation[0:3, 3])) < 1e-5:
+        if i > 1 and np.abs(np.mean(reg_p2l.transformation[0:3, 3]-transformation[0:3, 3])) < 1e-7:
             transformation = reg_p2l.transformation
+            print(f'It did {i} number of iterations')
             break
         transformation = reg_p2l.transformation
 
@@ -297,12 +303,22 @@ def filetype(filename, system="ETPOS"):
         pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Raw_Frames_Round_1\\"
         pcap_raw = pathbase + raw_file + ".pcap"
         metadata = pathbase + raw_file + ".json"
-
     elif system == "Round2":
         raw_file = "OS-1-128_992035000186_1024x10_20211021_" + filename
         pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Raw_Frames_Round_2\\"
         pcap_raw = pathbase + raw_file + ".pcap"
         metadata = pathbase + raw_file + ".json"
+    elif system == "Round3":
+        raw_file = "OS-1-128_992035000186_1024x20_20211020_" + filename
+        pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Dovre\\pcap\\1_ned_20hz\\"
+        pcap_raw = pathbase + raw_file + ".pcap"
+        metadata = pathbase + raw_file + ".json"
+    elif system == "Round4":
+        raw_file = "OS-1-128_992035000186_1024x20_20211020_" + filename
+        pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Dovre\\pcap\\1_opp_20hz\\"
+        pcap_raw = pathbase + raw_file + ".pcap"
+        metadata = pathbase + raw_file + ".json"
+
     else:
         # Raise an error if the system argument is not recognized.
         raise ValueError(f"System {system} is not recognized.")
@@ -320,7 +336,6 @@ def get_coordinate(pcap, frame_i=None):
             sys.stdout = original  # Save a reference to the original standard output
         coord = pcap.get_coordinates(rotate=False)  # Erlend Dahl Teapot
         frame_i = int(len(coord)/2)
-
         init_pos = {'lat': coord[frame_i].lat, 'lon': coord[frame_i].lon,
                     'time_est': coord[frame_i].sow, 'alt': coord[frame_i].alt,
                     'heading': coord[frame_i].heading}
@@ -393,22 +408,26 @@ if __name__ == "__main__":
     from collect_filename import get_files
     from Quality_Controll import c_l_track_error, root_mean_square, area_between_trajectories
     import draw_registration
+    import open3d.cpu.pybind
     # Grab Currrent Time Before Running the Code
     start = time.time()
 
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
-    system_folder = "Round1"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
-    section = "Rural"  # Full, Forest, Rural, Dense
-    file_list = get_files(36, 4, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    Area = "Lillehammer"
+    system_folder = "Round2"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
+    section = "Forest"  # Full, Forest, Rural, Dense
+    number_of_files = 3
+    file_list = get_files(8, number_of_files, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
     from_frame = 1
     to_frame = 198
     skips = 1
+    total_number_of_frames = number_of_files*np.round((to_frame-from_frame+1)/skips, 0)
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
     save_data = True
     print_point_cloud = False
-    handle_outliers = True
+    handle_outliers = False
     algorithm = "Point2Plane"
     seed = 1
     import sys
@@ -431,6 +450,10 @@ if __name__ == "__main__":
     outliers = {}
     inlier_rms = []
     num_outliers = 0
+    frames_finished = 0
+    removed_outliers = False
+    target_pointcloud = open3d.cpu.pybind.geometry.PointCloud()
+    source_pointcloud = open3d.cpu.pybind.geometry.PointCloud()
     """
     # Source NDH
     source_init = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\NDH-Lillehammer.laz"
@@ -440,18 +463,32 @@ if __name__ == "__main__":
     source_pc_numpy = pc_raw_laz  # Point cloud in open3d python format.
     """
     # Load the full point cloud used as source for the point cloud registration
-    source_pc_numpy = np.load('C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\full_source_PC_np.npy')
+    if Area == "Lillehammer":
+        source_pc_numpy = np.load('C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\full_source_PC_np.npy')
+        # Imports data from TEAPOT project.
+        from teapot_lidar.pcapReader import PcapReader
+        # Imports the True Trajectory from the SBET file
+        from teapot_lidar.sbetParser import SbetParser
+        true_trajectory_SBET = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
+        # sbet = SbetParser(true_trajectory_SBET)
 
-    # Imports data from TEAPOT project.
-    from teapot_lidar.pcapReader import PcapReader
-    # Imports the True Trajectory from the SBET file
-    from teapot_lidar.sbetParser import SbetParser
-    true_trajectory_SBET = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
-    # sbet = SbetParser(true_trajectory_SBET)
+        # initializes the Sbet file as ether the PPP og ETPOS file.
+        sbet_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-LC_PPP - SBS-WGS84-UTC-Lidar-10Hz-1.743 0.044 -0.032.out"
+        sbet_ETPOS = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
+    else:
+        source_pc_numpy = np.load(
+            'C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\pros_data\\dovre_full_source_pc.npy')
+        # Imports data from TEAPOT project.
+        from teapot_lidar.pcapReader import PcapReader
+        # Imports the True Trajectory from the SBET file
+        from teapot_lidar.sbetParser import SbetParser
+        true_trajectory_SBET = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Dovre\\navigation\\realtime-sbet-output-UTC-1000.out"
+        # sbet = SbetParser(true_trajectory_SBET)
 
-    # initializes the Sbet file as ether the PPP og ETPOS file.
-    sbet_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-LC_PPP - SBS-WGS84-UTC-Lidar-10Hz-1.743 0.044 -0.032.out"
-    sbet_ETPOS = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
+        # initializes the Sbet file as ether the PPP og ETPOS file.
+        sbet_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Dovre\\navigation\\sbet-output-UTC-1000.out"
+        sbet_ETPOS = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Dovre\\navigation\\realtime-sbet-output-UTC-1000.out"
+
     if sbet_process == "PPP":  # chooses if PPP or ETPOS file is being used.
         initial_navigation_trajectory = sbet_PPP
         EPSG = 7912
@@ -479,10 +516,10 @@ if __name__ == "__main__":
 
         # Iterate through all selected frames with the designated skips.
         for frame_index in range(from_frame, to_frame, skips):
+            frames_finished += 1
 
             # implment seed for each frame
             seed += 1
-            np.random.seed(seed)
             start_frame = time.time()
 
             initial_position = get_coordinate(pcap_reader, frame_index)
@@ -490,7 +527,7 @@ if __name__ == "__main__":
                 break
 
             # with open("frame_7.txt", 'w') as f:  # Transforms PCAP files to Open 3d point clouds, in the correct heading and coordinatesystem
-            pc_transformed, init_coord, origo = transform_pcap(pcap_file, meta, initial_navigation_trajectory, frame_index, initial_position, standalone, EPSG)
+            pc_transformed, init_coord, origo = transform_pcap(pcap_file, meta, initial_navigation_trajectory, frame_index, initial_position, standalone, EPSG, seed)
             target = pc_transformed
 
             # Get source pc
@@ -523,12 +560,6 @@ if __name__ == "__main__":
             # of the initial coordinate, the initial coordinate is initiates as the true coordinate.
             if handle_outliers is True:
                 if init_inlier_rmse > 0.20:
-                    print('This is an outlier')
-                    frame_outlier = [frame_index, f'Inlier RMSE: {np.round(init_inlier_rmse, 3)}']
-                    frame_outlier_list.append(frame_outlier)
-                    outlier = True
-                    num_outliers += 1
-                    """
                     print(f'Warning: high RMSE value, continue ICP to converge for frame {frame_index} in file {files}')
 
                     trans_init, rmse = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9,
@@ -542,17 +573,22 @@ if __name__ == "__main__":
                         frame_outlier_list.append(frame_outlier)
                         outlier = True
                         num_outliers += 1
-                        # continue
-                    """
+                        removed_outliers = True
+                        continue
+            else:
+                if init_inlier_rmse > 0.20:
+                    print('This is an outlier')
+                    frame_outlier = [frame_index, f'Inlier RMSE: {np.round(init_inlier_rmse, 3)}']
+                    frame_outlier_list.append(frame_outlier)
+                    outlier = True
+                    num_outliers += 1
+
             # Save the initial coordinate and the timesteps
             timesteps.append(initial_position['time_est'])  # collects all timesteps
             initial_coordinate.append(init_coord)
-            print(np.round(target_transformed.get_center(), 3))
             target_transformed.transform(trans_init)  # Final Transformation for the target point cloud
-            print(np.round(target_transformed.get_center(), 3))
 
             movement = trans_init[0:3, 3] - origo
-            print(movement)
             # As a controll to esatblish the
 
             if trans_init[0, 3]*origo[0] < 0:
@@ -562,9 +598,9 @@ if __name__ == "__main__":
 
             movement_target.append(movement)
             # Plotting the target point cloud against the source point cloud
-            if print_point_cloud is True:
-                source_for_plotting = source_transformed.voxel_down_sample(voxel_size=0.1)
-                draw_registration.draw_absolute_registration_result(source_for_plotting, target_transformed, target_transformed.get_center() - origo)
+
+            # source_for_plotting = source_transformed.voxel_down_sample(voxel_size=0.1)
+            # draw_registration.draw_absolute_registration_result(source_for_plotting, target_pointcloud, target_transformed.get_center() - origo)
 
             trans_matrix.append(np.mean(trans_init))  # stores all transformation matrixes.
             # Below the Source and Target gets translated back to absolute coordinates. The reason for this is because of constraintes on Open 3d ICP algorithm
@@ -572,8 +608,11 @@ if __name__ == "__main__":
             source_ICP = copy.deepcopy(source_transformed).translate(saved_center, relative=False)
             target_ICP_center = target_transformed.get_center() + saved_center - origo
 
-            target_ICP = copy.deepcopy(target_transformed).translate(target_ICP_center, relative=False)
-
+            if print_point_cloud is True:
+                target_ICP = copy.deepcopy(target_transformed).translate(target_ICP_center, relative=False)
+                target_ICP_2 = copy.deepcopy(target_transformed).translate(target_transformed.get_center() + saved_center, relative=False)
+                target_pointcloud += target_ICP_2
+                source_pointcloud += source
             # Get sbet coord for a gived timestep
             pcap_reader_true = PcapReader(pcap_file, meta, sbet_path=true_trajectory_SBET)  # Erlend Dahl Teapot
             true_position = get_coordinate(pcap_reader_true, frame_index)
@@ -612,10 +651,19 @@ if __name__ == "__main__":
             long_track.append(lte)
             end_frame = time.time()
             total_frame = end_frame - start_frame
-            print(f'It takes {total_frame} s per frame')
+            print(f'It takes {np.round(total_frame,3)} s per frame')
+            print(f'it is {np.round((frames_finished / total_number_of_frames)*100, 3)} % finished')
+            print(f'Estimated {np.round((total_number_of_frames-frames_finished)*13/60,2)} minutes left')
         if outlier is True:
             outliers[files] = frame_outlier_list
+
     # Reshapes the arrays,to more readable and usable data.
+    if print_point_cloud is True:
+        target_pointcloud = copy.deepcopy(target_pointcloud).translate(target_pointcloud.get_center()-target_ICP_center, relative=False)
+        source_pointcloud = copy.deepcopy(source_pointcloud).translate(source_pointcloud.get_center()-target_ICP_center, relative=False)
+        source_for_plotting = source_pointcloud.voxel_down_sample(voxel_size=0.2)
+        draw_registration.draw_absolute_registration_result(source_for_plotting, target_pointcloud,
+                                                            target_pointcloud.get_center())
     sbet_full = np.reshape(full_sbet, (-1, 3))
     std = np.reshape(std, (-1, 3))
     std_raw = np.reshape(std_raw, (-1, 3))
@@ -665,14 +713,14 @@ if __name__ == "__main__":
     area_target_source = np.round(area_between_trajectories(target_coord, true_coord), 2)
     area_init_traj_source = np.round(area_between_trajectories(initial_coord, true_coord), 2)
 
-    dev_plane_target_source = np.round(np.percentile(np.sqrt((target_coord[:, 0] - true_coord[:, 0]) ** 2 + (target_coord[:, 2] - true_coord[:, 2]) ** 2), 95), 3)
-    dev_height_target_source = np.round(np.percentile(np.sqrt((target_coord[:, 2] - true_coord[:, 2]) ** 2), 95), 3)
+    dev_plane_target_source = np.round(np.percentile(np.sqrt((target_coord[:, 0] - true_coord[:, 0]) ** 2 + (target_coord[:, 2] - true_coord[:, 2]) ** 2), 95), 2)
+    dev_height_target_source = np.round(np.percentile(np.sqrt((target_coord[:, 2] - true_coord[:, 2]) ** 2), 95), 2)
 
-    dev_plane_init_source = np.round(np.percentile(np.sqrt((initial_coord[:, 0] - true_coord[:, 0]) ** 2 + (initial_coord[:, 2] - true_coord[:, 2]) ** 2), 95), 3)
-    dev_height_init_source = np.round(np.percentile(np.sqrt((initial_coord[:, 2] - true_coord[:, 2]) ** 2), 95), 3)
+    dev_plane_init_source = np.round(np.percentile(np.sqrt((initial_coord[:, 0] - true_coord[:, 0]) ** 2 + (initial_coord[:, 2] - true_coord[:, 2]) ** 2), 95), 2)
+    dev_height_init_source = np.round(np.percentile(np.sqrt((initial_coord[:, 2] - true_coord[:, 2]) ** 2), 95), 2)
 
-    dev_plane_init_target = np.round(np.percentile(np.sqrt((initial_coord[:, 0] - target_coord[:, 0]) ** 2 + (initial_coord[:, 2] - target_coord[:, 2]) ** 2), 95), 3)
-    dev_height_init_target = np.round(np.percentile(np.sqrt((initial_coord[:, 2] - target_coord[:, 2]) ** 2), 95), 3)
+    dev_plane_init_target = np.round(np.percentile(np.sqrt((initial_coord[:, 0] - target_coord[:, 0]) ** 2 + (initial_coord[:, 2] - target_coord[:, 2]) ** 2), 95), 2)
+    dev_height_init_target = np.round(np.percentile(np.sqrt((initial_coord[:, 2] - target_coord[:, 2]) ** 2), 95), 2)
 
     # draw_las(source_transformed, "source.las")
 
@@ -808,38 +856,27 @@ if __name__ == "__main__":
         text_file.write(f'Area between trajectories for initial traj vs target trajectory {area_target_init_traj} m^2\n\n\n')
 
         text_file.write(f'95% percentile initial trajectory vs true trajectory {dev_plane_init_source} m in 2d and  {dev_height_init_source}m in height\n ')
-        text_file.write(f'95% percentile initial trajectory vs true trajectory {dev_plane_target_source} m in 2d and  {dev_height_target_source}m in height\n ')
-        text_file.write(f'95% percentile initial trajectory vs true trajectory {dev_plane_init_target} m in 2d and  {dev_height_init_target}m in height\n ')
+        text_file.write(f'95% percentile target trajectory vs true trajectory {dev_plane_target_source} m in 2d and  {dev_height_target_source}m in height\n ')
+        text_file.write(f'95% percentile initial trajectory vs target trajectory {dev_plane_init_target} m in 2d and  {dev_height_init_target}m in height\n ')
 
         if bool(outliers) is True:
-            text_file.write(f'Total number of outliers are {num_outliers}, {(num_outliers/len(initial_coordinate[:,0]))*100}% of the total number of frames\n\n\n')
-
+            text_file.write(f'Total number of outliers are {num_outliers}, {np.round((num_outliers/(num_outliers+len(initial_coordinate[:,0])))*100,1)}% of the total number of frames\n\n')
+        if removed_outliers is False:
+            text_file.write('The results are not corrected for outliers\n\n')
         text_file.write(line1)
         text_file.write("\n")
         text_file.write(line2)
         text_file.write("\n")
-        text_file.write(line3)
-        text_file.write("\n")
-        text_file.write(line4)
-        text_file.write("\n")
         text_file.write(line5)
-        text_file.write("\n")
-        # text_file.write('True trajectory filename: ' + true_filename)
-        # text_file.write("\n")
-        text_file.write('SBET trajectory filename, that match with timestamps: ' + sbet_filename)
-        text_file.write("\n")
-        text_file.write('PPP trajectory filename: ' + raw_filename)
-        text_file.write("\n")
-        text_file.write('Georefferenced processed Target filename: ' + target_filename)
         text_file.write("\n")
         if bool(outliers) is True:
             text_file.write("The outliers of the file are frames where the inlier RMSE value is higher than 0.25m after \n "
                             "An initial attempt to converge the outliers")
             text_file.write("\n")
             text_file.write(str(outliers))
-        elif handle_outliers is False:
-            text_file.write('The results are not corrected for outliers')
-        else:
-            text_file.write('There are no outliers after the point cloud registration')
 
+        else:
+            text_file.write('There are no outliers after the point cloud registration\n\n')
         text_file.close()
+
+    # Reshapes the arrays,to more readable and usable data.sbet_full = np.reshape(full_sbet, (-1, 3))

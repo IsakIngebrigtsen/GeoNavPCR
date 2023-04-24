@@ -4,11 +4,16 @@ def get_files(from_file_number=2, number_of_files=1, folder="Round1"):
 
     folder_round1 = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Raw_Frames_Round_1"
     folder_round2 = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Raw_Frames_Round_2"
-
-    if folder == "Round1":
-        folder_dir = folder_round1
-    else:
+    folder_round3 = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Dovre\\pcap\\1_ned_20hz"
+    folder_round4 = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Dovre\\pcap\\1_ned_20hz"
+    if folder == "Round4":
+        folder_dir = folder_round4
+    elif folder == "Round2":
         folder_dir = folder_round2
+    elif folder == "Round3":
+        folder_dir = folder_round3
+    else:
+        folder_dir = folder_round1
 
     files_list = os.listdir(folder_dir)
     y = []

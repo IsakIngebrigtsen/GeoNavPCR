@@ -1,0 +1,32 @@
+Processing of the following trajectory:Full, from Round1 with initial trajectory PPP
+And algorithm Point2Plane
+processed the file ['194456', '194517', '194538', '194559', '194620', '194641', '194702', '194723', '194744', '194805', '194826', '194847', '194908', '194929', '194950', '195011', '195032', '195053', '195115', '195136', '195157', '195218', '195239', '195300', '195321', '195342', '195403', '195424', '195445', '195506', '195527', '195548', '195609', '195630', '195651', '195712', '195733', '195754', '195815', '195836', '195857', '195918', '195939'], with the frames 1 to 198,with 3 skips, and it took 30704.6653 seconds
+Thats 511.74 minutes or 8.53 hours
+
+
+RMSE value for initial traj against true traj: (0.097, 0.329, 0.319) (n,e,alt)
+RMSE value for target traj against true traj:(0.33, 0.177, 0.194) (n,e,alt)
+RMSE value for initial traj against target traj: (0.322, 0.41, 0.471) (n,e,alt)
+
+
+Area between trajectories for initial trajectory vs true trajectory 1126.59 m^2
+Area between trajectories for target trajectory vs true trajectory 441.52 m^2
+Area between trajectories for initial traj vs target trajectory 1296.78 m^2
+
+95% percentile initial trajectory vs true trajectory 0.733 m in 2d and  0.687m in height
+95% percentile target trajectory vs true trajectory 0.418 m in 2d and  0.352m in height
+95% percentile initial trajectory vs target trajectory 0.955 m in 2d and  0.855m in height
+Total number of outliers are 43, 1.55% of the total number of frames
+
+
+Estimated deviation between the target trajectory against the true trajectory
+Average distanse error is 0.2 m, and before the registration: 0.33 m
+Based on the files ['194456', '194517', '194538', '194559', '194620', '194641', '194702', '194723', '194744', '194805', '194826', '194847', '194908', '194929', '194950', '195011', '195032', '195053', '195115', '195136', '195157', '195218', '195239', '195300', '195321', '195342', '195403', '195424', '195445', '195506', '195527', '195548', '195609', '195630', '195651', '195712', '195733', '195754', '195815', '195836', '195857', '195918', '195939']
+From frame 1 to frame 198 with 2 skips
+min deviation error is 0.001 m and max:3.373m
+SBET trajectory filename, that match with timestamps: pros_data\true_trajectory_2023-04-12_0637.npy
+PPP trajectory filename: pros_data\initial_trajectory_2023-04-12_0637.npy
+Georefferenced processed Target filename: pros_data\target_trajectory_2023-04-12_0637.npy
+The outliers of the file are frames where the inlier RMSE value is higher than 0.25m after 
+ An initial attempt to converge the outliers
+{'194641': [[106, 'Inlier RMSE: 0.252'], [109, 'Inlier RMSE: 0.256'], [115, 'Inlier RMSE: 0.212'], [121, 'Inlier RMSE: 0.205'], [124, 'Inlier RMSE: 0.209']], '194723': [[97, 'Inlier RMSE: 0.205'], [100, 'Inlier RMSE: 0.23'], [109, 'Inlier RMSE: 0.271'], [124, 'Inlier RMSE: 0.411'], [127, 'Inlier RMSE: 0.374'], [130, 'Inlier RMSE: 0.348'], [133, 'Inlier RMSE: 0.341'], [136, 'Inlier RMSE: 0.406'], [139, 'Inlier RMSE: 0.337'], [142, 'Inlier RMSE: 0.339'], [145, 'Inlier RMSE: 0.364'], [148, 'Inlier RMSE: 0.337'], [193, 'Inlier RMSE: 0.245']], '194744': [[10, 'Inlier RMSE: 0.211'], [22, 'Inlier RMSE: 0.287'], [25, 'Inlier RMSE: 0.289'], [28, 'Inlier RMSE: 0.315'], [37, 'Inlier RMSE: 0.324']], '194805': [[49, 'Inlier RMSE: 0.273']], '195403': [[88, 'Inlier RMSE: 0.474'], [91, 'Inlier RMSE: 0.528'], [94, 'Inlier RMSE: 0.505'], [97, 'Inlier RMSE: 0.539'], [100, 'Inlier RMSE: 0.431'], [121, 'Inlier RMSE: 0.482'], [127, 'Inlier RMSE: 0.446'], [130, 'Inlier RMSE: 0.43'], [133, 'Inlier RMSE: 0.423']], '195651': [[121, 'Inlier RMSE: 0.204']], '195712': [[1, 'Inlier RMSE: 0.213'], [7, 'Inlier RMSE: 0.245']], '195857': [[13, 'Inlier RMSE: 0.206'], [16, 'Inlier RMSE: 0.248'], [19, 'Inlier RMSE: 0.242'], [22, 'Inlier RMSE: 0.21'], [25, 'Inlier RMSE: 0.209']], '195918': [[154, 'Inlier RMSE: 0.385'], [160, 'Inlier RMSE: 0.211']]}

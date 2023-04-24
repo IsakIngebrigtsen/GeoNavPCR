@@ -129,27 +129,36 @@ def dev(traj1, traj2):
 if __name__ == "__main__":
 
     import numpy as np
-    target = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\target_coord_2023-03-20_0641.npy")
-    source = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\sbet_coord_2023-03-20_0641.npy")
-    init_traj = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\raw_coord_2023-03-20_0641.npy")
+    target = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\target_trajectory_2023-04-20_0902.npy")
+    source = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\true_trajectory_2023-04-20_0902.npy")
 
-    target_r1_un = np.load("pros_data\\Standalone\\Round1_fulltraj_uncorrected_outliers\\target_coord_2023-03-17_0419.npy")
-    source_r1_un = np.load("pros_data\\Standalone\\Round1_fulltraj_uncorrected_outliers\\sbet_coord_2023-03-17_0419.npy")
+    target_r1_co = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\target_trajectory_2023-04-20_0902.npy")
+    source_r1_co = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\true_trajectory_2023-04-20_0902.npy")
+
+    init_traj = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\initial_trajectory_2023-04-20_0902.npy")
+
+    target_r1_un = np.load("pros_data\\Standalone\\Round1_fulltraj_uncorrected_outliers\\target_trajectory_2023-04-20_0854.npy")
+    source_r1_un = np.load("pros_data\\Standalone\\Round1_fulltraj_uncorrected_outliers\\true_trajectory_2023-04-20_0854.npy")
+    init_traj_r1_un = np.load("pros_data\\Standalone\\Round1_fulltraj_uncorrected_outliers\\initial_trajectory_2023-04-20_0854.npy")
 
     target_r2_un = np.load(
-        "pros_data\\Standalone\\Round2_fulltraj_uncorrected_outliers\\target_coord_2023-04-05_0650.npy")
+        "pros_data\\Standalone\\Round2_fulltraj_uncorrected_outliers\\target_trajectory_2023-04-21_0743.npy")
     source_r2_un = np.load(
-        "pros_data\\Standalone\\Round2_fulltraj_uncorrected_outliers\\sbet_coord_2023-04-05_0650.npy")
+        "pros_data\\Standalone\\Round2_fulltraj_uncorrected_outliers\\true_trajectory_2023-04-21_0743.npy")
 
     target_r2_co = np.load(
-        "pros_data\\Standalone\\Round2_fulltraj_corrected_outliers\\target_coord_2023-03-23_0626.npy")
+        "pros_data\\Standalone\\Round2_fulltraj_corrected_outliers\\target_trajectory_2023-04-22_1021.npy")
     source_r2_co = np.load(
-        "pros_data\\Standalone\\Round2_fulltraj_corrected_outliers\\sbet_coord_2023-03-23_0626.npy")
+        "pros_data\\Standalone\\Round2_fulltraj_corrected_outliers\\true_trajectory_2023-04-22_1021.npy")
 
     target_r1_pp = np.load(
-        "pros_data\\Standalone\\Round1_fulltraj_uncorrected_Point_to_Point\\target_coord_2023-04-07_0755.npy")
+        "pros_data\\Standalone\\Round1_fulltraj_uncorrected_Point_to_Point\\target_trajectory_2023-04-24_0656.npy")
     source_r1_pp = np.load(
-        "pros_data\\Standalone\\Round1_fulltraj_uncorrected_Point_to_Point\\sbet_coord_2023-04-07_0755.npy")
+        "pros_data\\Standalone\\Round1_fulltraj_uncorrected_Point_to_Point\\true_trajectory_2023-04-24_0656.npy")
+    target_r1_PPP_un = np.load(
+        "pros_data\\PPP\\Round1_uncorrected_outliers\\target_trajectory_2023-04-18_0654.npy")
+    source_r1_PPP_un = np.load(
+        "pros_data\\PPP\\Round1_uncorrected_outliers\\true_trajectory_2023-04-18_0654.npy")
 
     target_r1_PPP = np.load(
         "pros_data\\PPP\\Round1_corrected_outliers\\target_trajectory_2023-04-12_0637.npy")
@@ -159,7 +168,10 @@ if __name__ == "__main__":
         "pros_data\\PPP\\Round2_corrected_outliers\\target_trajectory_2023-04-17_0536.npy")
     source_r2_PPP = np.load(
         "pros_data\\PPP\\Round2_corrected_outliers\\true_trajectory_2023-04-17_0536.npy")
-    init_traj_r1_un = np.load("pros_data\\Standalone\\Round1_fulltraj_uncorrected_outliers\\raw_coord_2023-03-17_0419.npy")
+    target_r2_PPP_un = np.load(
+        "pros_data\\PPP\\Round2_uncorrected_outliers\\target_trajectory_2023-04-16_1230.npy")
+    source_r2_PPP_un = np.load(
+        "pros_data\\PPP\\Round2_uncorrected_outliers\\true_trajectory_2023-04-16_1230.npy")
 
     rms_n_init, rms_e_init, rms_alt_init = np.round(root_mean_square(init_traj, target), 2)
     rms_n_target, rms_e_target, rms_alt_target = np.round(root_mean_square(target, source), 2)
@@ -168,32 +180,43 @@ if __name__ == "__main__":
     dev_plane_target_source_r1_un = percentile(target_r1_un, source_r1_un)
 
     import matplotlib.pyplot as plt
+    import scipy
+    tree = scipy.spatial.cKDTree(source_r2_un[:, 0:2])
+    nearest_raw, ii = tree.query(source_r2_un[:, 0:2])
+    nearest_referanced, jj = tree.query(target_r2_un[:, 0:2])
 
-    a = dev(target, source)
+    a = dev(target_r1_co, source_r1_co)
     b = dev(target_r1_un, source_r1_un)
     c = dev(target_r2_un, source_r2_un)
     d = dev(target_r2_co, source_r2_co)
     e = dev(target_r1_pp, source_r1_pp)
     f = dev(target_r1_PPP, source_r1_PPP)
     g = dev(target_r2_PPP, source_r2_PPP)
+    h = dev(target_r1_PPP_un, source_r1_PPP_un)
+    i = dev(target_r2_PPP_un, source_r2_PPP_un)
 
-    p = np.linspace(50, 100, 6001)
+    p = np.linspace(50, 100, 20)
     plt.style.use('fivethirtyeight')
     fig, ax = plt.subplots(1, 1)
     fig.set_size_inches(15, 25, forward=True)
+    fig1 = np.percentile(a, p, method='linear')
+    fig2 = np.percentile(f, p, method='linear')
     # for method, style, color in lines:
     ax.plot(
-            p, np.percentile(a, p, method='linear'),
-            label="Round1 corrected for outliers", linestyle=':')
+             p, fig1,
+             label="Round1 corrected for outliers", linestyle=':')
     ax.plot(
-        p, np.percentile(b, p, method='linear'),
-        label="Round1 uncorrected for outliers", linestyle=':')
+         p, np.percentile(b, p, method='linear'),
+         label="Round1 uncorrected for outliers", linestyle=':')
     ax.plot(
         p, np.percentile(e, p, method='linear'),
         label="Round1 uncorrected for outliers point to point", linestyle=':')
     ax.plot(
-        p, np.percentile(f, p, method='linear'),
-        label="Round1 corrected for outliers PPP initial trajectory", linestyle=':')
+        p, fig2,
+        label="Round1 corrected for outliers PPP initial trajectory", linestyle='--')
+    ax.plot(
+        p, np.percentile(h, p, method='linear'),
+        label="Round1 uncorrected for outliers PPP initial trajectory", linestyle='--')
 
     ax.plot(
         p, np.percentile(c, p, method='linear'),
@@ -204,7 +227,11 @@ if __name__ == "__main__":
 
     ax.plot(
         p, np.percentile(g, p, method='linear'),
-        label="Round2 corrected for outliers PPP initial trajectory", linestyle='-.')
+        label="Round2 corrected for outliers PPP initial trajectory", linestyle='-')
+    ax.plot(
+        p, np.percentile(i, p, method='linear'),
+        label="Round2 uncorrected for outliers PPP initial trajectory", linestyle='-')
+    ax.axvline(x=95, color='red', linestyle='--', lw = 2)
 
     ax.set_yscale('log', base=2)
     import matplotlib as mat
@@ -212,6 +239,7 @@ if __name__ == "__main__":
 
     # ax.get_xaxis().set_major_formatter(mat.ticker.ScalarFormatter())
     # ax.set_yticks([0, 0.2, 0.4, 0.8, 1, 3, 10, 30])
+    # ax.set_ylim([0, 0.5])
     ax.set(
         title='Percentiles for Full trajectories',
         xlabel='Percentile',
@@ -221,66 +249,87 @@ if __name__ == "__main__":
     plt.show()
     fig.savefig('full_traj_percentile.png')
 
-    target_r1_forest = np.load("pros_data\\Standalone\\Round1_forest\\target_trajectory_2023-04-14_1151.npy")
-    source_r1_forest = np.load("pros_data\\Standalone\\Round1_forest\\true_trajectory_2023-04-14_1151.npy")
+    target_r1_forest = np.load("pros_data\\Standalone\\Round1_forest\\target_trajectory_2023-04-20_1941.npy")
+    source_r1_forest = np.load("pros_data\\Standalone\\Round1_forest\\true_trajectory_2023-04-20_1941.npy")
 
-    target_r2_forest = np.load("pros_data\\Standalone\\Round2_forest\\target_trajectory_2023-04-14_1148.npy")
-    source_r2_forest = np.load("pros_data\\Standalone\\Round2_forest\\true_trajectory_2023-04-14_1148.npy")
+    target_r2_forest = np.load("pros_data\\Standalone\\Round2_forest\\target_trajectory_2023-04-20_1937.npy")
+    source_r2_forest = np.load("pros_data\\Standalone\\Round2_forest\\true_trajectory_2023-04-20_1937.npy")
 
-    target_r1_dense = np.load("pros_data\\Standalone\\Round1_dense\\target_trajectory_2023-04-15_1635.npy")
-    source_r1_dense = np.load("pros_data\\Standalone\\Round1_dense\\true_trajectory_2023-04-15_1635.npy")
+    target_r1_dense_2 = np.load("pros_data\\Standalone\\Round1_dense\\target_trajectory_2023-04-21_2343.npy")
+    source_r1_dense_2 = np.load("pros_data\\Standalone\\Round1_dense\\true_trajectory_2023-04-21_2343.npy")
 
-    target_r2_dense = np.load("pros_data\\Standalone\\Round2_dense\\target_trajectory_2023-04-15_1637.npy")
-    source_r2_dense = np.load("pros_data\\Standalone\\Round2_dense\\true_trajectory_2023-04-15_1637.npy")
+    target_r2_dense_2 = np.load("pros_data\\Standalone\\Round2_dense\\target_trajectory_2023-04-21_2342.npy")
+    source_r2_dense_2 = np.load("pros_data\\Standalone\\Round2_dense\\true_trajectory_2023-04-21_2342.npy")
 
-    target_r1_rural = np.load("pros_data\\Standalone\\Round1_rural\\target_trajectory_2023-04-17_1708.npy")
-    source_r1_rural = np.load("pros_data\\Standalone\\Round1_rural\\true_trajectory_2023-04-17_1708.npy")
+    target_r1_rural = np.load("pros_data\\Standalone\\Round1_rural\\target_trajectory_2023-04-22_2226.npy")
+    source_r1_rural = np.load("pros_data\\Standalone\\Round1_rural\\true_trajectory_2023-04-22_2226.npy")
 
-    target_r2_rural = np.load("pros_data\\Standalone\\Round2_rural\\target_trajectory_2023-04-17_1711.npy")
-    source_r2_rural = np.load("pros_data\\Standalone\\Round2_rural\\true_trajectory_2023-04-17_1711.npy")
-
+    target_r2_rural = np.load("pros_data\\Standalone\\Round2_rural\\target_trajectory_2023-04-22_2229.npy")
+    source_r2_rural = np.load("pros_data\\Standalone\\Round2_rural\\true_trajectory_2023-04-22_2229.npy")
 
     a = dev(target_r1_forest, source_r1_forest)
     b = dev(target_r2_forest, source_r2_forest)
-    c = dev(target_r1_dense, source_r1_dense)
-    d = dev(target_r2_dense, source_r2_dense)
+    forest = (a+b)/2
+    c = dev(target_r1_dense_2[0:1171], source_r1_dense_2[0:1171])
+    d = dev(target_r2_dense_2, source_r2_dense_2)
+    dense = (c+d)/2
     e = dev(target_r1_rural, source_r1_rural)
     f = dev(target_r2_rural, source_r2_rural)
+    rural = (e+f)/2
 
-    p = np.linspace(50, 100, 6001)
+    p = np.linspace(50, 100, 50)
     plt.style.use('fivethirtyeight')
+    plt.rcParams.update({'font.size': 18})
     fig, ax = plt.subplots(1, 1)
-    fig.set_size_inches(15, 25, forward=True)
+    fig.set_size_inches(25, 10, forward=True)
+    import scipy.interpolate as interp
+
     # for method, style, color in lines:
-    ax.plot(
-            p, np.percentile(a, p, method='linear'),
-            label="Round1 Forest", linestyle='-.')
-    ax.plot(
-        p, np.percentile(b, p, method='linear'),
-        label="Round2 Forest", linestyle='-.')
-    ax.plot(
-        p, np.percentile(c, p, method='linear'),
-        label="Round1 Dense street", linestyle=':')
-    ax.plot(
-        p, np.percentile(d, p, method='linear'),
-        label="Round2 Dense Street", linestyle=':')
-    ax.plot(
-        p, np.percentile(e, p, method='linear'),
-        label="Round1 rural street", linestyle='--')
-    ax.plot(
-        p, np.percentile(f, p, method='linear'),
-        label="Round2 rural street", linestyle='--')
+    # define the range of x values to interpolate over
+    """
+    x_range = np.linspace(50, 100, 5000)
 
-    ax.set_yscale('log', base=2)
+    # perform spline interpolation on each dataset
+    forest_interp = interp.interp1d(p, np.percentile(forest, p, method='linear'), kind='cubic')
+    dense_interp = interp.interp1d(p, np.percentile(dense, p, method='linear'), kind='cubic')
+    rural_interp = interp.interp1d(p, np.percentile(rural, p, method='linear'), kind='cubic')
+
+    # plot the interpolated data
+    ax.plot(forest_interp(x_range), x_range, label="Forested area", linestyle='-.', linewidth=4)
+    ax.plot(dense_interp(x_range), x_range, label="Urban street", linestyle='-', linewidth=4)
+    ax.plot(rural_interp(x_range), x_range, label="Rural area", linestyle='--', linewidth=4)
+    """
+    ax.plot(
+            np.percentile(forest, p, method='linear'), p,
+            label="Forested area", linestyle='-.', linewidth=4)
+    # ax.plot(
+    #   p, np.percentile(b, p, method='linear'),
+    #  label="Round2 Forest", linestyle='-.')
+    ax.plot(
+        np.percentile(dense, p, method='linear'), p,
+        label="Urban street", linestyle='-', linewidth=4)
+    # ax.plot(
+    #    p, np.percentile(d, p, method='linear'),
+    #    label="Round2 Dense Street", linestyle='-')
+
+    ax.plot(
+        np.percentile(rural, p, method='linear'),p,
+        label="Rural area", linestyle='--', linewidth=4)
+
+    # ax.plot(
+    #    p, np.percentile(f, p, method='linear'),
+    #    label="Round2 rural street", linestyle='--')
+
+    # ax.set_yscale('log', base=2)
     import matplotlib as mat
-    ax.get_yaxis().set_major_formatter(mat.ticker.ScalarFormatter())
-
+    # ax.get_yaxis().set_major_formatter(mat.ticker.ScalarFormatter())
+    # ax.set_ylim([3.5, 4])
     # ax.get_xaxis().set_major_formatter(mat.ticker.ScalarFormatter())
     # ax.set_yticks([0, 0.2, 0.4, 0.8, 1, 3, 10, 30])
     ax.set(
         title='Percentiles for Sections of the trajectory',
-        xlabel='Percentile',
-        ylabel='Estimated planimetric deviation (m)'
+        ylabel='Percentile',
+        xlabel='Estimated planimetric deviation (m)'
     ) #, yticks=np.round(np.arange(0, np.max(b),1/np.max(b)),2))
     ax.legend()
     plt.show()

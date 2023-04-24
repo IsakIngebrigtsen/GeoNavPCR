@@ -1,0 +1,32 @@
+Processing of the following trajectory:Rural, from Round1 with initial trajectory Standalone
+And algorithm Point2Plane
+processed the file ['195712', '195733', '195754', '195815'], with the frames 1 to 198,with 1 skips, and it took 10091.3005 seconds
+Thats 168.19 minutes or 2.8 hours
+
+
+Total number of frames are 784, with average time of 12.871556760204081 per frame
+
+
+RMSE value for initial traj against true traj: (1.47, 1.52, 0.09) (n,e,alt)
+RMSE value for target traj against true traj:(0.72, 0.62, 0.13) (n,e,alt)
+RMSE value for initial traj against target traj: (1.43, 1.5, 0.19) (n,e,alt)
+
+
+Area between trajectories for initial trajectory vs true trajectory 1052.45 m^2
+Area between trajectories for target trajectory vs true trajectory 51.26 m^2
+Area between trajectories for initial traj vs target trajectory 1200.47 m^2
+
+
+95% percentile initial trajectory vs true trajectory 2.97 m in 2d and  0.15m in height
+ 95% percentile target trajectory vs true trajectory 0.3 m in 2d and  0.23m in height
+ 95% percentile initial trajectory vs target trajectory 2.96 m in 2d and  0.33m in height
+ Total number of outliers are 26, 3.2% of the total number of frames
+
+The results are not corrected for outliers
+
+Estimated deviation between the target trajectory against the true trajectory
+Average distanse error is 0.19 m, and before the registration: 1.19 m
+min deviation error is 0.005 m and max:6.22m
+The outliers of the file are frames where the inlier RMSE value is higher than 0.25m after 
+ An initial attempt to converge the outliers
+{'195712': [[3, 'Inlier RMSE: 0.217'], [5, 'Inlier RMSE: 0.227'], [7, 'Inlier RMSE: 0.244'], [9, 'Inlier RMSE: 0.218'], [17, 'Inlier RMSE: 0.257'], [24, 'Inlier RMSE: 0.267'], [27, 'Inlier RMSE: 0.284'], [29, 'Inlier RMSE: 0.287'], [78, 'Inlier RMSE: 0.363'], [98, 'Inlier RMSE: 0.486'], [108, 'Inlier RMSE: 0.423']], '195733': [[9, 'Inlier RMSE: 0.434'], [26, 'Inlier RMSE: 0.415'], [39, 'Inlier RMSE: 0.386'], [57, 'Inlier RMSE: 0.42'], [73, 'Inlier RMSE: 0.289'], [79, 'Inlier RMSE: 0.348'], [81, 'Inlier RMSE: 0.338'], [87, 'Inlier RMSE: 0.338'], [113, 'Inlier RMSE: 0.431'], [183, 'Inlier RMSE: 0.442'], [188, 'Inlier RMSE: 0.421']], '195754': [[54, 'Inlier RMSE: 0.347'], [100, 'Inlier RMSE: 0.233'], [111, 'Inlier RMSE: 0.317'], [112, 'Inlier RMSE: 0.326']]}

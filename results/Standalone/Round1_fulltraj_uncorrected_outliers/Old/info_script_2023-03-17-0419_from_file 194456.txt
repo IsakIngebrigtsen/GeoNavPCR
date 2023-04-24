@@ -1,0 +1,31 @@
+Processing of the following trajectory:Full, from Round1 with initial trajectory Standalone
+
+
+processed the file ['194456', '194517', '194538', '194559', '194620', '194641', '194702', '194723', '194744', '194805', '194826', '194847', '194908', '194929', '194950', '195011', '195032', '195053', '195115', '195136', '195157', '195218', '195239', '195300', '195321', '195342', '195403', '195424', '195445', '195506', '195527', '195548', '195609', '195630', '195651', '195712', '195733', '195754', '195815', '195836', '195857', '195918', '195939'], with the frames 1 to 198,with 3 skips, and it took 31654.9911 seconds
+Thats 527.58 minutes or 8.79 hours
+Estimated deviation between the cars trajectory against the true trajectory
+Average distanse error is 0.24 m, and before the registration: 1.8 m
+
+RMSE value for initial traj against true traj: (2.07, 2.36, 0.32) (n,e,alt)
+RMSE value for target traj against true traj: (1.41, 1.23, 0.2) (n,e,alt)
+RMSE value for initial traj against target traj: (2.42, 2.4, 0.46) (n,e,alt)
+
+Area between trajectories for initial trajectory vs true trajectory 8195.23 m^2
+Area between trajectories for target trajectory vs true trajectory 886.25 m^2
+Area between trajectories for initial traj vs target trajectory 9386.58 m^2
+
+95% percentile initial trajectory vs true trajectory 4.28 m in 2d and  0.685m in height
+95% percentile target trajectory vs true trajectory 0.596 m in 2d and  0.363m in height
+95% percentile initial trajectory vs target trajectory 4.307 m in 2d and  0.835m in height
+
+
+
+Based on the files ['194456', '194517', '194538', '194559', '194620', '194641', '194702', '194723', '194744', '194805', '194826', '194847', '194908', '194929', '194950', '195011', '195032', '195053', '195115', '195136', '195157', '195218', '195239', '195300', '195321', '195342', '195403', '195424', '195445', '195506', '195527', '195548', '195609', '195630', '195651', '195712', '195733', '195754', '195815', '195836', '195857', '195918', '195939']
+From frame 1 to frame 198 with 2 skips
+min deviation error is 0.002 m and max:12.725m
+True trajectory filename: pros_data\true_trajectory_2023-03-17_0419.npy
+SBET trajectory filename, that match with timestamps: pros_data\sbet_coord_2023-03-17_0419.npy
+PPP trajectory filename: pros_data\raw_coord_2023-03-17_0419.npy
+Georefferenced processed Target filename: pros_data\target_coord_2023-03-17_0419.npy
+The code is not proccessed for outliers
+
