@@ -1,6 +1,7 @@
-# GeoNavPCR: Georeffernced point cloud registration, with the goal of improving navigaiton solution of a mobile mapping veichle. 
+# GeoNavPCR: Using point cloud registration algorithms to improve the navigation solutions of mobile mapping vehicles. 
 
-## This is the code made as part of the master thesis "Concept study: Using point cloud registration algorithms to improve the navigation solutions of mobile mapping vehicles."
+## This code is part of the theis
+
 
 
 

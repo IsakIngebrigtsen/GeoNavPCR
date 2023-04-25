@@ -415,19 +415,19 @@ if __name__ == "__main__":
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
     Area = "Lillehammer"
-    system_folder = "Round2"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
-    section = "Forest"  # Full, Forest, Rural, Dense
-    number_of_files = 3
-    file_list = get_files(8, number_of_files, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    system_folder = "Round1"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
+    section = "Full"  # Full, Forest, Rural, Dense
+    number_of_files = 43
+    file_list = get_files(1, number_of_files, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
     from_frame = 1
     to_frame = 198
-    skips = 1
+    skips = 3
     total_number_of_frames = number_of_files*np.round((to_frame-from_frame+1)/skips, 0)
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
-    standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
+    standalone = False  # if True a 1.5 meters deviation is added to the sbet data.
     save_data = True
     print_point_cloud = False
-    handle_outliers = False
+    handle_outliers = True
     algorithm = "Point2Plane"
     seed = 1
     import sys
@@ -823,10 +823,10 @@ if __name__ == "__main__":
 
         # Save the data as arrays
         # true_filename = 'pros_data\\true_trajectory_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
-        sbet_filename = 'pros_data\\true_trajectory_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
-        raw_filename = 'pros_data\\initial_trajectory_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
-        target_filename = 'pros_data\\target_trajectory_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
-        heading_filename = 'pros_data\\heading_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
+        sbet_filename = 'pros\\true_trajectory_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
+        raw_filename = 'pros\\initial_trajectory_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
+        target_filename = 'pros\\target_trajectory_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
+        heading_filename = 'pros\\heading_' + time.strftime("%Y-%m-%d_%H%M") + '.npy'
         np.save(heading_filename, direction)
         # np.save(true_filename, true_trajectory)
         np.save(sbet_filename, true_coord)
@@ -834,7 +834,7 @@ if __name__ == "__main__":
         np.save(target_filename, target_coord)
 
         file_name = 'info_script_' + time.strftime("%Y-%m-%d-%H%M") + '_from_file ' + file_list[0]+'.txt'
-        text_file = open('pros_data\\' + file_name, "w")
+        text_file = open('pros\\' + file_name, "w")
         if standalone is True:
             GNSS_system = "Standalone"
         else:

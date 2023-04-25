@@ -129,49 +129,49 @@ def dev(traj1, traj2):
 if __name__ == "__main__":
 
     import numpy as np
-    target = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\target_trajectory_2023-04-20_0902.npy")
-    source = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\true_trajectory_2023-04-20_0902.npy")
+    target = np.load("results\\Standalone\\Round1_fulltraj_corrected_outliers\\target_trajectory_2023-04-20_0902.npy")
+    source = np.load("results\\Standalone\\Round1_fulltraj_corrected_outliers\\true_trajectory_2023-04-20_0902.npy")
 
-    target_r1_co = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\target_trajectory_2023-04-20_0902.npy")
-    source_r1_co = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\true_trajectory_2023-04-20_0902.npy")
+    target_r1_co = np.load("results\\Standalone\\Round1_fulltraj_corrected_outliers\\target_trajectory_2023-04-20_0902.npy")
+    source_r1_co = np.load("results\\Standalone\\Round1_fulltraj_corrected_outliers\\true_trajectory_2023-04-20_0902.npy")
 
-    init_traj = np.load("pros_data\\Standalone\\Round1_fulltraj_corrected_outliers\\initial_trajectory_2023-04-20_0902.npy")
+    init_traj = np.load("results\\Standalone\\Round1_fulltraj_corrected_outliers\\initial_trajectory_2023-04-20_0902.npy")
 
-    target_r1_un = np.load("pros_data\\Standalone\\Round1_fulltraj_uncorrected_outliers\\target_trajectory_2023-04-20_0854.npy")
-    source_r1_un = np.load("pros_data\\Standalone\\Round1_fulltraj_uncorrected_outliers\\true_trajectory_2023-04-20_0854.npy")
-    init_traj_r1_un = np.load("pros_data\\Standalone\\Round1_fulltraj_uncorrected_outliers\\initial_trajectory_2023-04-20_0854.npy")
+    target_r1_un = np.load("results\\Standalone\\Round1_fulltraj_uncorrected_outliers\\target_trajectory_2023-04-20_0854.npy")
+    source_r1_un = np.load("results\\Standalone\\Round1_fulltraj_uncorrected_outliers\\true_trajectory_2023-04-20_0854.npy")
+    init_traj_r1_un = np.load("results\\Standalone\\Round1_fulltraj_uncorrected_outliers\\initial_trajectory_2023-04-20_0854.npy")
 
     target_r2_un = np.load(
-        "pros_data\\Standalone\\Round2_fulltraj_uncorrected_outliers\\target_trajectory_2023-04-21_0743.npy")
+        "results\\Standalone\\Round2_fulltraj_uncorrected_outliers\\target_trajectory_2023-04-21_0743.npy")
     source_r2_un = np.load(
-        "pros_data\\Standalone\\Round2_fulltraj_uncorrected_outliers\\true_trajectory_2023-04-21_0743.npy")
+        "results\\Standalone\\Round2_fulltraj_uncorrected_outliers\\true_trajectory_2023-04-21_0743.npy")
 
     target_r2_co = np.load(
-        "pros_data\\Standalone\\Round2_fulltraj_corrected_outliers\\target_trajectory_2023-04-22_1021.npy")
+        "results\\Standalone\\Round2_fulltraj_corrected_outliers\\target_trajectory_2023-04-22_1021.npy")
     source_r2_co = np.load(
-        "pros_data\\Standalone\\Round2_fulltraj_corrected_outliers\\true_trajectory_2023-04-22_1021.npy")
+        "results\\Standalone\\Round2_fulltraj_corrected_outliers\\true_trajectory_2023-04-22_1021.npy")
 
     target_r1_pp = np.load(
-        "pros_data\\Standalone\\Round1_fulltraj_uncorrected_Point_to_Point\\target_trajectory_2023-04-24_0656.npy")
+        "results\\Standalone\\Round1_fulltraj_uncorrected_Point_to_Point\\target_trajectory_2023-04-24_0656.npy")
     source_r1_pp = np.load(
-        "pros_data\\Standalone\\Round1_fulltraj_uncorrected_Point_to_Point\\true_trajectory_2023-04-24_0656.npy")
+        "results\\Standalone\\Round1_fulltraj_uncorrected_Point_to_Point\\true_trajectory_2023-04-24_0656.npy")
     target_r1_PPP_un = np.load(
-        "pros_data\\PPP\\Round1_uncorrected_outliers\\target_trajectory_2023-04-18_0654.npy")
+        "results\\PPP\\Round1_uncorrected_outliers\\target_trajectory_2023-04-18_0654.npy")
     source_r1_PPP_un = np.load(
-        "pros_data\\PPP\\Round1_uncorrected_outliers\\true_trajectory_2023-04-18_0654.npy")
+        "results\\PPP\\Round1_uncorrected_outliers\\true_trajectory_2023-04-18_0654.npy")
 
     target_r1_PPP = np.load(
-        "pros_data\\PPP\\Round1_corrected_outliers\\target_trajectory_2023-04-12_0637.npy")
+        "results\\PPP\\Round1_corrected_outliers\\target_trajectory_2023-04-25_0818.npy")
     source_r1_PPP = np.load(
-        "pros_data\\PPP\\Round1_corrected_outliers\\true_trajectory_2023-04-12_0637.npy")
+        "results\\PPP\\Round1_corrected_outliers\\true_trajectory_2023-04-25_0818.npy")
     target_r2_PPP = np.load(
-        "pros_data\\PPP\\Round2_corrected_outliers\\target_trajectory_2023-04-17_0536.npy")
+        "results\\PPP\\Round2_corrected_outliers\\target_trajectory_2023-04-17_0536.npy")
     source_r2_PPP = np.load(
-        "pros_data\\PPP\\Round2_corrected_outliers\\true_trajectory_2023-04-17_0536.npy")
+        "results\\PPP\\Round2_corrected_outliers\\true_trajectory_2023-04-17_0536.npy")
     target_r2_PPP_un = np.load(
-        "pros_data\\PPP\\Round2_uncorrected_outliers\\target_trajectory_2023-04-16_1230.npy")
+        "results\\PPP\\Round2_uncorrected_outliers\\target_trajectory_2023-04-16_1230.npy")
     source_r2_PPP_un = np.load(
-        "pros_data\\PPP\\Round2_uncorrected_outliers\\true_trajectory_2023-04-16_1230.npy")
+        "results\\PPP\\Round2_uncorrected_outliers\\true_trajectory_2023-04-16_1230.npy")
 
     rms_n_init, rms_e_init, rms_alt_init = np.round(root_mean_square(init_traj, target), 2)
     rms_n_target, rms_e_target, rms_alt_target = np.round(root_mean_square(target, source), 2)
@@ -249,23 +249,23 @@ if __name__ == "__main__":
     plt.show()
     fig.savefig('full_traj_percentile.png')
 
-    target_r1_forest = np.load("pros_data\\Standalone\\Round1_forest\\target_trajectory_2023-04-20_1941.npy")
-    source_r1_forest = np.load("pros_data\\Standalone\\Round1_forest\\true_trajectory_2023-04-20_1941.npy")
+    target_r1_forest = np.load("results\\Standalone\\Round1_forest\\target_trajectory_2023-04-20_1941.npy")
+    source_r1_forest = np.load("results\\Standalone\\Round1_forest\\true_trajectory_2023-04-20_1941.npy")
 
-    target_r2_forest = np.load("pros_data\\Standalone\\Round2_forest\\target_trajectory_2023-04-20_1937.npy")
-    source_r2_forest = np.load("pros_data\\Standalone\\Round2_forest\\true_trajectory_2023-04-20_1937.npy")
+    target_r2_forest = np.load("results\\Standalone\\Round2_forest\\target_trajectory_2023-04-20_1937.npy")
+    source_r2_forest = np.load("results\\Standalone\\Round2_forest\\true_trajectory_2023-04-20_1937.npy")
 
-    target_r1_dense_2 = np.load("pros_data\\Standalone\\Round1_dense\\target_trajectory_2023-04-21_2343.npy")
-    source_r1_dense_2 = np.load("pros_data\\Standalone\\Round1_dense\\true_trajectory_2023-04-21_2343.npy")
+    target_r1_dense_2 = np.load("results\\Standalone\\Round1_urban\\target_trajectory_2023-04-21_2343.npy")
+    source_r1_dense_2 = np.load("results\\Standalone\\Round1_urban\\true_trajectory_2023-04-21_2343.npy")
 
-    target_r2_dense_2 = np.load("pros_data\\Standalone\\Round2_dense\\target_trajectory_2023-04-21_2342.npy")
-    source_r2_dense_2 = np.load("pros_data\\Standalone\\Round2_dense\\true_trajectory_2023-04-21_2342.npy")
+    target_r2_dense_2 = np.load("results\\Standalone\\Round2_urban\\target_trajectory_2023-04-21_2342.npy")
+    source_r2_dense_2 = np.load("results\\Standalone\\Round2_urban\\true_trajectory_2023-04-21_2342.npy")
 
-    target_r1_rural = np.load("pros_data\\Standalone\\Round1_rural\\target_trajectory_2023-04-22_2226.npy")
-    source_r1_rural = np.load("pros_data\\Standalone\\Round1_rural\\true_trajectory_2023-04-22_2226.npy")
+    target_r1_rural = np.load("results\\Standalone\\Round1_rural\\target_trajectory_2023-04-22_2226.npy")
+    source_r1_rural = np.load("results\\Standalone\\Round1_rural\\true_trajectory_2023-04-22_2226.npy")
 
-    target_r2_rural = np.load("pros_data\\Standalone\\Round2_rural\\target_trajectory_2023-04-22_2229.npy")
-    source_r2_rural = np.load("pros_data\\Standalone\\Round2_rural\\true_trajectory_2023-04-22_2229.npy")
+    target_r2_rural = np.load("results\\Standalone\\Round2_rural\\target_trajectory_2023-04-22_2229.npy")
+    source_r2_rural = np.load("results\\Standalone\\Round2_rural\\true_trajectory_2023-04-22_2229.npy")
 
     a = dev(target_r1_forest, source_r1_forest)
     b = dev(target_r2_forest, source_r2_forest)
