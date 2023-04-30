@@ -172,8 +172,9 @@ if __name__ == "__main__":
         "results\\PPP\\Round2_uncorrected_outliers\\target_trajectory_2023-04-16_1230.npy")
     source_r2_PPP_un = np.load(
         "results\\PPP\\Round2_uncorrected_outliers\\true_trajectory_2023-04-16_1230.npy")
-
-    rms_n_init, rms_e_init, rms_alt_init = np.round(root_mean_square(init_traj, target), 2)
+    init = np.load("pros\\Full_trajectorys\\meh\\ETPOS_trajectory_EUREF89.npy")
+    true = np.load("pros\\Full_trajectorys\\meh\\ETPOS_trajectory_ITRF14.npy")
+    rms_n_init, rms_e_init, rms_alt_init = np.round(root_mean_square(init, true), 2)
     rms_n_target, rms_e_target, rms_alt_target = np.round(root_mean_square(target, source), 2)
     rms_n_init_source, rms_e_init_source, rms_alt_init_source = np.round(root_mean_square(init_traj, source), 2)
     dev_plane_target_source = percentile(target, source)

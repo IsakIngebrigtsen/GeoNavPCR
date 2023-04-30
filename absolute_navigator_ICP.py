@@ -236,6 +236,7 @@ def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_va
             init_target, init_source, threshold_value, transformation, pipelines.registration.TransformationEstimationPointToPlane(), convergence)
         return transformation, reg_p2l.inlier_rmse
     else:
+        print('Point2plane')
         icp_algorithm = pipelines.registration.TransformationEstimationPointToPlane()
 
     reg_p2l = pipelines.registration.registration_icp(
@@ -245,7 +246,7 @@ def o3d_icp(init_source, init_target, transformation, iterations=1, threshold_va
         reg_p2l = pipelines.registration.registration_icp(
             init_target, init_source, threshold_value, transformation, icp_algorithm, convergence)
         # Check for convergence
-        if i > 1 and np.abs(np.mean(reg_p2l.transformation[0:3, 3]-transformation[0:3, 3])) < 1e-7:
+        if i > 1 and np.abs(np.mean(reg_p2l.transformation[0:3, 3]-transformation[0:3, 3])) < 1e-5:
             transformation = reg_p2l.transformation
             print(f'It did {i} number of iterations')
             break
@@ -415,19 +416,19 @@ if __name__ == "__main__":
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
     Area = "Lillehammer"
-    system_folder = "Round1"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
+    system_folder = "Round2"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
     section = "Full"  # Full, Forest, Rural, Dense
-    number_of_files = 43
-    file_list = get_files(1, number_of_files, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    number_of_files = 10
+    file_list = get_files(20, number_of_files, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
     from_frame = 1
     to_frame = 198
-    skips = 3
+    skips = 5
     total_number_of_frames = number_of_files*np.round((to_frame-from_frame+1)/skips, 0)
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     standalone = False  # if True a 1.5 meters deviation is added to the sbet data.
     save_data = True
     print_point_cloud = False
-    handle_outliers = True
+    handle_outliers = False
     algorithm = "Point2Plane"
     seed = 1
     import sys
@@ -549,9 +550,12 @@ if __name__ == "__main__":
             # Initial transform that translate down to local coordinateframe
             downsampled_source, source_transformed, downsampled_target, target_transformed, target_center = initial_transform(source, target, init_coord)
             threshold = 1
+            # source_for_plotting = source_transformed.voxel_down_sample(voxel_size=0.2)
+            # draw_registration.draw_absolute_registration_result(source_for_plotting, target_transformed,
 
+            #                                                    target_transformed.get_center()-origo)
             trans_init = np.identity(4)  # initial transformation matrix
-
+            """
             trans_init, rmse = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9, model=algorithm)  # Perform ICP on downsampled data
             trans_init, init_inlier_rmse = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1, model=algorithm)  # Perform ICP on the whole dataset.
             print(f'inlier_RMSE :{np.round(init_inlier_rmse,3)}')
@@ -582,7 +586,7 @@ if __name__ == "__main__":
                     frame_outlier_list.append(frame_outlier)
                     outlier = True
                     num_outliers += 1
-
+            """
             # Save the initial coordinate and the timesteps
             timesteps.append(initial_position['time_est'])  # collects all timesteps
             initial_coordinate.append(init_coord)
@@ -663,7 +667,7 @@ if __name__ == "__main__":
         source_pointcloud = copy.deepcopy(source_pointcloud).translate(source_pointcloud.get_center()-target_ICP_center, relative=False)
         source_for_plotting = source_pointcloud.voxel_down_sample(voxel_size=0.2)
         draw_registration.draw_absolute_registration_result(source_for_plotting, target_pointcloud,
-                                                            target_pointcloud.get_center())
+                                                            target_pointcloud.get_center()- origo)
     sbet_full = np.reshape(full_sbet, (-1, 3))
     std = np.reshape(std, (-1, 3))
     std_raw = np.reshape(std_raw, (-1, 3))

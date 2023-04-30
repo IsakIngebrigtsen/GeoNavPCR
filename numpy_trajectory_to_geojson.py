@@ -28,7 +28,7 @@ if __name__ == "__main__":
     df = {'filename': [filename], 'geometry': [line]}
     gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:5972")
     gdf.to_json()
-    save_file = 'pros_data\\'+filename+'.geojson'
+    save_file = 'pros\\'+filename+'.geojson'
     gdf.to_file(save_file, driver="GeoJSON")
 
     """

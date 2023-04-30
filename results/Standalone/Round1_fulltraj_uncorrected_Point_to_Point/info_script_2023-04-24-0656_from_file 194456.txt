@@ -7,9 +7,9 @@ Thats 548.34 minutes or 9.14 hours
 Total number of frames are 2798, with average time of 11.758464403145105 per frame
 
 
-RMSE value for initial traj against true traj: (1.49, 1.52, 0.32) (n,e,alt)
-RMSE value for target traj against true traj:(0.74, 0.71, 0.13) (n,e,alt)
-RMSE value for initial traj against target traj: (1.47, 1.5, 0.41) (n,e,alt)
+RMSE value for initial traj against true traj: (1.49,1.52,0.32) (n,e,alt)
+RMSE value for target traj against true traj:(0.74,0.71,0.13) (n,e,alt)
+RMSE value for initial traj against target traj: (1.47,1.5,0.41) (n,e,alt)
 
 
 Area between trajectories for initial trajectory vs true trajectory 6527.67 m^2

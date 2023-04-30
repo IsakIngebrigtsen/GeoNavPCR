@@ -13,7 +13,7 @@ def draw_absolute_registration_result(pc_1,pc_2,target_center):
     source_temp = copy.deepcopy(pc_1)
     target_temp = copy.deepcopy(pc_2)
 
-    source_temp.paint_uniform_color([0.0, 0.5, 1.0])
+    source_temp.paint_uniform_color([1.0, 1.0, 1.0])
     target_temp.paint_uniform_color([1.0, 0.5, 0.0])
 
     # source_temp.paint_uniform_color([1, 1, 1])
@@ -43,7 +43,7 @@ def draw_absolute_registration_result(pc_1,pc_2,target_center):
     ctr = vis.get_view_control()
     ctr.set_zoom(0.3)
     ctr.set_lookat(target_center)
-    ctr.set_up((0.5, 0.5, 0.5))
+    ctr.set_up((0.8, 0.2, 0.2))
     print('source init')
     print(target_temp.get_center())
     # run visualizer main loop
@@ -152,45 +152,49 @@ def draw_icp(source,target,trans_init):
 
 if __name__ == "__main__":
     filename = "OS-1-128_992035000186_1024x10_20211021_194723"
-    pathBase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-PCAP\\"
+    pathBase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Raw_Frames_Round_1\\"
     pcap_file = pathBase + filename + ".pcap"
     meta = pathBase + filename + ".json"
+    from absolute_navigator_ICP import *
     from absolute_navigator_ICP import get_frame
     accumulatedTime = 0.0
     startTime = time.perf_counter()
+    from sys import path
+    path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot_lidar")
+    from teapot_lidar.pcapReader import PcapReader
 
-    source = get_frame(pcap_file, meta, 70)
+    initial_navigation_trajectory = "C:\\Users\\isakf\ \Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-LC_PPP - SBS-WGS84-UTC-Lidar-10Hz-1.743 0.044 -0.032.out"
+    pcap_reader = PcapReader(pcap_file, meta, sbet_path=initial_navigation_trajectory)  # Erlend Dahl Teapot
+    source_pc_numpy = np.load(
+        'C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\full_source_PC_np.npy')
+    center_coord_init_source = get_coordinate(pcap_reader, 70)
+    # To speed up the cutting of the large point cloud, do an initial crop per file, to optimize the speeed.
+    partial_radius = 50
+    crop_coord, c_epoch = transform_mapprojection(crs_from=7912)
+    east_init, north_init, alt_init, epoch_init = crop_coord.transform(center_coord_init_source['lat'],
+                                                                       center_coord_init_source['lon'],
+                                                                       center_coord_init_source['alt'], c_epoch)
+
+    init_part_of_source_np = source_pc_numpy[
+        (source_pc_numpy[:, 0] >= east_init - partial_radius) & (
+                source_pc_numpy[:, 0] <= east_init + partial_radius) & (
+                source_pc_numpy[:, 1] >= north_init - partial_radius) & (
+                source_pc_numpy[:, 1] <= north_init + partial_radius)]  # Erlend Dahl
+    source = point_cloud_pros(part_of_source_np)
+    initial_position = get_coordinate(pcap_reader, 70)
+    pc_transformed, init_coord, origo = transform_pcap(pcap_file, meta, initial_navigation_trajectory, 70,
+                                                       initial_position, True, 7912, 1)
 
     target = get_frame(pcap_file, meta, 74)
-
-    source = source.reshape((-1, 3))
-    target = target.reshape((-1, 3))
-    # Remove the vehicle
-    source = remove_vehicle(source)
-    target = remove_vehicle(target)
-
-    source = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(source))
-    target = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(target))
-
-    source.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
-    target.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
-
-    accumulatedTime += time.perf_counter() - startTime
-
-    print(f"Time usage: {time.perf_counter() - startTime:0.4f} seconds.")
-    print("")
+    downsampled_source, source_transformed, downsampled_target, target_transformed, target_center = initial_transform(
+        source, target, init_coord)
+    draw_absolute_registration_result(downsampled_source,downsampled_target, target_center)
 
 
-    downsampled_source = source.voxel_down_sample(voxel_size=0.5)
-    downsampled_target = target.voxel_down_sample(voxel_size=0.5)
-    accumulatedTime += time.perf_counter() - startTime
-    print(f"Downsampling (0.5) performed in {(time.perf_counter() - startTime) / 2.0:0.4f} seconds per cloud.")
 
-    threshold = 1
-    trans_init = np.identity(4)
-    draw_registration_result(downsampled_source, downsampled_target, trans_init)
-
+    """
     trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)
     trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)
     trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)
     trans_init = draw_icp(source, target, trans_init)
+    """
