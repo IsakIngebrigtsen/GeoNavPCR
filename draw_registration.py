@@ -175,23 +175,6 @@ if __name__ == "__main__":
                                                                        center_coord_init_source['lon'],
                                                                        center_coord_init_source['alt'], c_epoch)
 
-    init_part_of_source_np = source_pc_numpy[
-        (source_pc_numpy[:, 0] >= east_init - partial_radius) & (
-                source_pc_numpy[:, 0] <= east_init + partial_radius) & (
-                source_pc_numpy[:, 1] >= north_init - partial_radius) & (
-                source_pc_numpy[:, 1] <= north_init + partial_radius)]  # Erlend Dahl
-    source = point_cloud_pros(part_of_source_np)
-    initial_position = get_coordinate(pcap_reader, 70)
-    pc_transformed, init_coord, origo = transform_pcap(pcap_file, meta, initial_navigation_trajectory, 70,
-                                                       initial_position, True, 7912, 1)
-
-    target = get_frame(pcap_file, meta, 74)
-    downsampled_source, source_transformed, downsampled_target, target_transformed, target_center = initial_transform(
-        source, target, init_coord)
-    draw_absolute_registration_result(downsampled_source,downsampled_target, target_center)
-
-
-
     """
     trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)
     trans_init = draw_icp(downsampled_source, downsampled_target, trans_init)

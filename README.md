@@ -17,9 +17,9 @@ The goal of the thesis has been to establish a consistent way of using point clo
 
 Furthermore, the following are the research questions that are used in the thesis:
 
-*Can PCR improve the absolute accuracy of a mobile mapping LiDAR point cloud by aligning it with a georeferenced point cloud? 
+* Can PCR improve the absolute accuracy of a mobile mapping LiDAR point cloud by aligning it with a georeferenced point cloud? 
 
-*Can a predicted trajectory from PCR be used as a viable quality measure of a navigation solution?
+* Can a predicted trajectory from PCR be used as a viable quality measure of a navigation solution?
 
 
 
