@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     FROM_CRS = 4326 #WGS84
     TO_CRS =  25832 #UTM32
-    sbet_np_ETPOS, smrmsg_np_ETPOS  =read_sbet(sbet_ETPOS, smrmsg_ETPOS)
+    sbet_np_ETPOS, smrmsg_np_ETPOS  =read_sbet(sbet_PPP, smrmsg_PPP)
     # sbet_np_ETPOS, smrmsg_np_ETPOS  =read_sbet(sbet_PPP, smrmsg_PPP)
 
     # sbet_np_stand, smrmsg_np_stand = read_sbet(sbet_filename_stand, smrmsg_stand)
@@ -139,20 +139,20 @@ if __name__ == "__main__":
     ar_to = 9660
     # Round 1 0 9660
     # Round 2 10000 19200
-    mean_lat = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['lat-std'][ar_from:ar_to]**2)/(len(smrmsg_np_ETPOS['lat-std'][ar_from:ar_to]))), 3)
-    mean_lon = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['lon-std'][ar_from:ar_to]**2)/(len(smrmsg_np_ETPOS['lon-std'][ar_from:ar_to]))), 3)
-    mean_alt = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['alt-std'][ar_from:ar_to]**2)/(len(smrmsg_np_ETPOS['alt-std'][ar_from:ar_to]))), 3)
+    mean_lat = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['lat-std'][ar_from:ar_to]**2)/(len(smrmsg_np_ETPOS['lat-std'][ar_from:ar_to]))), 2)
+    mean_lon = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['lon-std'][ar_from:ar_to]**2)/(len(smrmsg_np_ETPOS['lon-std'][ar_from:ar_to]))), 2)
+    mean_alt = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['alt-std'][ar_from:ar_to]**2)/(len(smrmsg_np_ETPOS['alt-std'][ar_from:ar_to]))), 2)
     plt.style.use('fivethirtyeight')
     plt.rcParams.update({'font.size': 18})
     fig, ax = plt.subplots(figsize=(20, 10))
     # ax.set_facecolor('#eafff5')
-    ax.set_title('INS standard deviation, Processed with ETPOS, True trajectory')
-    ax.plot(smrmsg_np_ETPOS['time'][ar_from:ar_to]-smrmsg_np_ETPOS['time'][0], smrmsg_np_ETPOS['lat-std'][ar_from:ar_to], linewidth=2.7, label=f'Latitude std, mean:{mean_lat} m')
-    ax.plot(smrmsg_np_ETPOS['time'][ar_from:ar_to]-smrmsg_np_ETPOS['time'][0], smrmsg_np_ETPOS['lon-std'][ar_from:ar_to], linewidth=2.7, label=f'Longitude std, mean:{mean_lon} m ')
-    ax.plot(smrmsg_np_ETPOS['time'][ar_from:ar_to]-smrmsg_np_ETPOS['time'][0], smrmsg_np_ETPOS['alt-std'][ar_from:ar_to], linewidth=2.7, label=f'Altitude std, mean:{mean_alt} m')
+    ax.set_title('INS standard deviation, Processed with PPP, Round 1')
+    ax.plot(smrmsg_np_ETPOS['time'][ar_from:ar_to]-smrmsg_np_ETPOS['time'][ar_from], smrmsg_np_ETPOS['lat-std'][ar_from:ar_to], linewidth=2.7, label=f'Latitude std, mean:{mean_lat} m')
+    ax.plot(smrmsg_np_ETPOS['time'][ar_from:ar_to]-smrmsg_np_ETPOS['time'][ar_from], smrmsg_np_ETPOS['lon-std'][ar_from:ar_to], linewidth=2.7, label=f'Longitude std, mean:{mean_lon} m ')
+    ax.plot(smrmsg_np_ETPOS['time'][ar_from:ar_to]-smrmsg_np_ETPOS['time'][ar_from], smrmsg_np_ETPOS['alt-std'][ar_from:ar_to], linewidth=2.7, label=f'Altitude std, mean:{mean_alt} m')
     ax.set_ylabel('Distance (meter)')
-    ax.set_xlabel('Time (seconds)')
-    ax.set_ylim([-0.001, 0.03])
+    ax.set_xlabel('Time (second)')
+    ax.set_ylim([-0.05, 1])
     ax.set_xlim([-40, 1040])
     # ax.grid()
     # get the legend object
@@ -163,7 +163,7 @@ if __name__ == "__main__":
         line.set_linewidth(4.0)
     # ax.grid(linestyle='-', linewidth=0.5)
     plt.show()
-    # fig.savefig('ETPOS_std_Truetraj.png')
+    fig.savefig('PPP_std_Round1.png')
     """
     mean_lat = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['lat-std']**2)/(len(smrmsg_np_ETPOS['lat-std'])-1)), 3)
     mean_lon = np.round(np.sqrt(np.sum(smrmsg_np_ETPOS['lon-std']**2)/(len(smrmsg_np_ETPOS['lon-std'])-1)), 3)

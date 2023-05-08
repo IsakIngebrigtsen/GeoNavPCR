@@ -285,6 +285,7 @@ if __name__ == "__main__":
     fig.set_size_inches(25, 10, forward=True)
     import scipy.interpolate as interp
 
+
     # for method, style, color in lines:
     # define the range of x values to interpolate over
     """
@@ -442,3 +443,46 @@ if __name__ == "__main__":
     print(f'standard deviation between the initial coordinates and the\ncalculated coordinates: {std_N, std_E,std_alt}')
     print(f'standard deviation between the initial coordinates and the\ncalculated coordinates: {std_N_tar, std_E_tar,std_alt_tar}')
     """
+    #%% Histogram
+    RMSE_pred_PPP = np.sqrt((0.34**2+0.19**2+0.33**2+0.18**2)/4)
+    RMSE_init_PPP = np.sqrt((0.1**2+0.33**2+0.1**2+0.18**2)/4)
+    RMSE_pred_standalone = np.sqrt((0.47 ** 2 + 0.35 ** 2 + 0.44 ** 2 + 0.33 ** 2) / 4)
+    RMSE_init_standalone = np.sqrt((1.45 ** 2 + 1.47 ** 2 + 1.45 ** 2 + 1.49 ** 2) / 4)
+    ninefive_pred_stand = (0.46+0.5)/2
+    ninefive_init_stand = (2.92+2.84)/2
+    ninefive_pred_PPP = (0.4+0.45)/2
+    ninefive_init_PPP = (0.73+0.36)/2
+    x_PPP = [RMSE_init_PPP, RMSE_pred_PPP, ninefive_init_PPP, ninefive_pred_PPP]
+    x_stand = np.array([RMSE_init_standalone, RMSE_pred_standalone, ninefive_init_stand, ninefive_pred_stand])
+    color_list_PPP = np.array(['firebrick', 'cornflowerblue', 'firebrick', 'cornflowerblue'])
+    color_list_stand = np.array(['darkorange', 'cornflowerblue', 'darkorange', 'cornflowerblue'])
+    tick_label_list_PPP = ['RMSE \nPPP Inital','RMSE \nPredicted trajectory','95 percentile \nPPP Inital','95 percentile \nPredicted trajectory']
+    tick_label_list_stand = np.array(['RMSE \nStandalone Inital','RMSE \nPredicted trajectory','95 percentile \nStandalone Inital','95 percentile \nPredicted trajectory'])
+    import matplotlib.pyplot as plt
+    fig, (ax1, ax2)=plt.subplots(1, 2)
+    fig.set_size_inches(20, 10, forward=True)
+    plt.style.use('fivethirtyeight')
+    data = ['Predicted trajectory', 'Initial Trajectory']
+
+    ax1.bar(tick_label_list_PPP, x_PPP, color=color_list_PPP, tick_label=tick_label_list_PPP, width=0.25, capstyle="round")
+    xmin, xmax = ax1.get_xlim()
+    ax1.set(xlim=(xmin - 0.25, xmax + 0.25), axisbelow=True)
+    ax1.set_yticks(np.round(np.linspace(0, 3.2, 9), 2))
+    ax1.set_title("Data quality with PPP as Initial trajectory")
+    ax2.bar(tick_label_list_stand, x_stand, color=color_list_stand, tick_label=tick_label_list_stand, width=0.25, capstyle="round")
+    ax2.set_yticks(np.round(np.linspace(0, 3.2, 9), 2))
+    xmin, xmax = ax2.get_xlim()
+    ax2.set(xlim=(xmin - 0.25, xmax + 0.25), axisbelow=True)
+    ax2.set_title("Data quality with Standalone as Initial trajectory")
+    ax1.set_ylabel('Meter')
+    ax2.set_ylabel('Meter')
+    ax2.grid(axis='x')
+    ax2.axhline(y=0.0, color='black', linestyle='-')
+    ax1.axhline(y=0.0, color='black', linestyle='-')
+    ax1.tick_params(axis='x', labelsize=16)
+    ax2.tick_params(axis='x', labelsize=16)
+    ax1.tick_params(axis='y', labelsize=16)
+    ax2.tick_params(axis='y', labelsize=16)
+    ax1.grid(axis='x')
+    fig.show()
+    fig.savefig('Data_quality.png')

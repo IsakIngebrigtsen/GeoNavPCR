@@ -301,22 +301,22 @@ def filetype(filename, system="ETPOS"):
     """
     if system == "Round1":
         raw_file = "OS-1-128_992035000186_1024x10_20211021_" + filename
-        pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Raw_Frames_Round_1\\"
+        pathbase = data_path + "Raw_Frames_Round_1\\"
         pcap_raw = pathbase + raw_file + ".pcap"
         metadata = pathbase + raw_file + ".json"
     elif system == "Round2":
         raw_file = "OS-1-128_992035000186_1024x10_20211021_" + filename
-        pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Raw_Frames_Round_2\\"
+        pathbase = data_path + "Raw_Frames_Round_2\\"
         pcap_raw = pathbase + raw_file + ".pcap"
         metadata = pathbase + raw_file + ".json"
     elif system == "Round3":
         raw_file = "OS-1-128_992035000186_1024x20_20211020_" + filename
-        pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Dovre\\pcap\\1_ned_20hz\\"
+        pathbase = data_path + "Dovre\\pcap\\1_ned_20hz\\"
         pcap_raw = pathbase + raw_file + ".pcap"
         metadata = pathbase + raw_file + ".json"
     elif system == "Round4":
         raw_file = "OS-1-128_992035000186_1024x20_20211020_" + filename
-        pathbase = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Dovre\\pcap\\1_opp_20hz\\"
+        pathbase = data_path + "Dovre\\pcap\\1_opp_20hz\\"
         pcap_raw = pathbase + raw_file + ".pcap"
         metadata = pathbase + raw_file + ".json"
 
@@ -415,20 +415,21 @@ if __name__ == "__main__":
 
     # Inputs for the data!
     voxel_size = 0.5  # means 5cm for this dataset
+    data_path = 'C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\'
     Area = "Lillehammer"
     system_folder = "Round2"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
     section = "Full"  # Full, Forest, Rural, Dense
-    number_of_files = 10
+    number_of_files = 1
     file_list = get_files(20, number_of_files, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
-    from_frame = 1
-    to_frame = 198
+    from_frame = 10
+    to_frame = 25
     skips = 5
     total_number_of_frames = number_of_files*np.round((to_frame-from_frame+1)/skips, 0)
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
-    standalone = False  # if True a 1.5 meters deviation is added to the sbet data.
+    standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
     save_data = True
     print_point_cloud = False
-    handle_outliers = False
+    handle_outliers = True
     algorithm = "Point2Plane"
     seed = 1
     import sys
@@ -465,17 +466,17 @@ if __name__ == "__main__":
     """
     # Load the full point cloud used as source for the point cloud registration
     if Area == "Lillehammer":
-        source_pc_numpy = np.load('C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Referansepunktsky-LAZ\\full_source_PC_np.npy')
+        source_pc_numpy = np.load(data_path+'Referansepunktsky-LAZ\\full_source_PC_np.npy')
         # Imports data from TEAPOT project.
         from teapot_lidar.pcapReader import PcapReader
         # Imports the True Trajectory from the SBET file
         from teapot_lidar.sbetParser import SbetParser
-        true_trajectory_SBET = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
+        true_trajectory_SBET = data_path + "Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
         # sbet = SbetParser(true_trajectory_SBET)
 
         # initializes the Sbet file as ether the PPP og ETPOS file.
-        sbet_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-LC_PPP - SBS-WGS84-UTC-Lidar-10Hz-1.743 0.044 -0.032.out"
-        sbet_ETPOS = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
+        sbet_PPP = data_path + "Sbet\\Lillehammer_211021_3_7-LC_PPP - SBS-WGS84-UTC-Lidar-10Hz-1.743 0.044 -0.032.out"
+        sbet_ETPOS = data_path + "Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
     else:
         source_pc_numpy = np.load(
             'C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\pros_data\\dovre_full_source_pc.npy')
@@ -483,12 +484,12 @@ if __name__ == "__main__":
         from teapot_lidar.pcapReader import PcapReader
         # Imports the True Trajectory from the SBET file
         from teapot_lidar.sbetParser import SbetParser
-        true_trajectory_SBET = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Dovre\\navigation\\realtime-sbet-output-UTC-1000.out"
+        true_trajectory_SBET = data_path + "Dovre\\navigation\\realtime-sbet-output-UTC-1000.out"
         # sbet = SbetParser(true_trajectory_SBET)
 
         # initializes the Sbet file as ether the PPP og ETPOS file.
-        sbet_PPP = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Dovre\\navigation\\sbet-output-UTC-1000.out"
-        sbet_ETPOS = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Dovre\\navigation\\realtime-sbet-output-UTC-1000.out"
+        sbet_PPP = data_path + "Dovre\\navigation\\sbet-output-UTC-1000.out"
+        sbet_ETPOS = data_path + "Dovre\\navigation\\realtime-sbet-output-UTC-1000.out"
 
     if sbet_process == "PPP":  # chooses if PPP or ETPOS file is being used.
         initial_navigation_trajectory = sbet_PPP
@@ -555,7 +556,7 @@ if __name__ == "__main__":
 
             #                                                    target_transformed.get_center()-origo)
             trans_init = np.identity(4)  # initial transformation matrix
-            """
+
             trans_init, rmse = o3d_icp(downsampled_source, downsampled_target, trans_init, iterations=9, model=algorithm)  # Perform ICP on downsampled data
             trans_init, init_inlier_rmse = o3d_icp(source_transformed, target_transformed, trans_init, iterations=1, model=algorithm)  # Perform ICP on the whole dataset.
             print(f'inlier_RMSE :{np.round(init_inlier_rmse,3)}')
@@ -586,7 +587,7 @@ if __name__ == "__main__":
                     frame_outlier_list.append(frame_outlier)
                     outlier = True
                     num_outliers += 1
-            """
+
             # Save the initial coordinate and the timesteps
             timesteps.append(initial_position['time_est'])  # collects all timesteps
             initial_coordinate.append(init_coord)
@@ -841,9 +842,10 @@ if __name__ == "__main__":
         text_file = open('pros\\' + file_name, "w")
         if standalone is True:
             GNSS_system = "Standalone"
-        else:
+        elif sbet_process == "PPP" and standalone is False :
             GNSS_system = "PPP"
-
+        else:
+            GNSS_system = "ETPOS"
         text_file.write(f'Processing of the following trajectory:{section}, from {system_folder} with initial trajectory {GNSS_system}\n')
         text_file.write(f'And algorithm {algorithm}')
 
