@@ -1,11 +1,11 @@
 ![Header](./notes/Before_and_after_PCR.png)
-[<img src="./notes/animation_tiny.gif" width="600" height="300" />](./notes/animation.gif) |
 
 # GeoNavPCR: Using point cloud registration algorithms to improve the navigation solutions of mobile mapping vehicles. 
 
 ## Introduction
 
-This GitHub page is consisting of the code that lays the basis for the master thesis: Using point Cloud registration to improve a navigation solution: an experimental approach.
+This GitHub page is consisting of the code that lays the basis for the master thesis: Improving navigation with LiDAR
+scanners: A concept study on the use of point cloud registration to enhance and evaluate absolute accuracy
 
 Taken from the thesis to establish context for the code:
 
@@ -20,16 +20,15 @@ by analysing the quality of the navigation solution, where the goal is to contri
 a quality measure of the absolute accuracy of a mobile mapping project when the
 accuracy is poor or unknown."
 
-
-The goal of the thesis has been to establish a consistent way of using point cloud registration to establish an absolute position by aligning it with a georeferenced point cloud.
-
-Furthermore, the following are the research questions that are used in the thesis:
+Furthermore, these are the following research questions used in the thesis:
 
 * Can PCR improve the absolute accuracy of a mobile mapping LiDAR point cloud by aligning it with an existing georeferenced point cloud? 
 
 * Can the predicted trajectory improved with PCR be used as a viable quality measure of a navigation solution?
 
+## Results
 
+A more expansive overview of the results presented in this thesis is aviable in the folder ```results```
 
 
 # Running the code
@@ -38,7 +37,7 @@ Furthermore, the following are the research questions that are used in the thesi
 
 This code is implemented with python 3.8 and the requierments for the code can be found in the file requirements.txt
 
-As well as the requirements, the teapot-library was used. Forked the 19.01.23 with commit: f1e8d6ba6d9a0003ecc4630a878518c3778dabf. This is available at: IsakIngebrigtsen/teapot-lidar
+As well as the requirements, the teapot-library was used. Forked the 19.01.23 with commit: f1e8d6ba6d9a0003ecc4630a878518c3778dabf. This is available at: ```IsakIngebrigtsen/teapot-lidar```
 The teapot-library should be pulled, and the path needs to be added to line 421 in ```absolute_navigatior_ICP.py```
 
 All data used in this thesis are available at https://drive.google.com/drive/folders/1SnkDh-X8KOc1iNNy_-xhMAyngN93VshZ
