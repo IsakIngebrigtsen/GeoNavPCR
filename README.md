@@ -1,6 +1,6 @@
 ![Header](./notes/Before_and_after_PCR.png)
 
-# GeoNavPCR: Using point cloud registration algorithms to improve the navigation solutions of mobile mapping vehicles. 
+# GeoNavPCR: Improving navigation with LiDAR scanners: A concept study on the use of point cloud registration to enhance and evaluate absolute accuracy
 
 ## Introduction
 
