@@ -37,7 +37,7 @@ A more expansive overview of the results presented in this thesis is aviable in 
 
 This code is implemented with python 3.8 and the requierments for the code can be found in the file requirements.txt
 
-As well as the requirements, the teapot-library was used. Forked the 19.01.23 with commit: f1e8d6ba6d9a0003ecc4630a878518c3778dabf. This repository is available at: ```IsakIngebrigtsen/teapot-lidar```
+As well as the requirements, the teapot-library was used. Forked the 19.01.23 with commit: f1e8d6ba6d9a0003ecc4630a878518c3778dabf, collected from erlenddahl/teapot-lidar. This repository is available at: ```IsakIngebrigtsen/teapot-lidar```
 The teapot-library should be pulled, and the path needs to be added to line 421 in ```absolute_navigatior_ICP.py```
 
 All data used in this thesis are available at https://drive.google.com/drive/folders/1SnkDh-X8KOc1iNNy_-xhMAyngN93VshZ
