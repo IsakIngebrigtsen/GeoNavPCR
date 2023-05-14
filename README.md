@@ -6,7 +6,8 @@
 
 This GitHub page is consisting of the program establishing the basis for the master thesis: Improving Navigation with LiDAR Scanners: A Concept Study on the Use of Point Cloud Registration to Enhance and Evaluate Absolute Accuracy
 
-Written by Isak Foss Ingebrigtsen May 2023
+
+###Written by Isak Foss Ingebrigtsen May 2023
 
 
 Taken from the thesis to establish context for the code:

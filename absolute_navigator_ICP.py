@@ -419,7 +419,7 @@ if __name__ == "__main__":
     # Path to teapot_lidar project. Code forked with the hash f1e8d6ba6d9a0003ecc4630a878518c3778dabf4, with some minor
     # adjustments. Version used can be pulled from https://github.com/IsakIngebrigtsen/teapot-lidar
     data_path_teapot_lidar = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\teapot_lidar"
-    Area = "Lillehammer" # Lillehammer, and Dovre are areas that can be testet
+    Area = "Lillehammer"  # Lillehammer, and Dovre are areas that can be testet
     system_folder = "Round1"  # Round 1, and Round 2 is for Lillehammer, and Round 3 and Round 4 is for dovre.
     section = "Full"  # Full, Forest, Rural, Dense
     number_of_files = 1
