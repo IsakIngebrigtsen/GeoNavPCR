@@ -39,7 +39,7 @@ Since the data from Dovre was made available short time before the deadline, fro
 
 ## Requirements
 
-This code is implemented with python 3.8 and the requierments for the code can be found in the file requirements.txt
+This code is implemented with python 3.8 and the requierments for the code can be found in the file ```requirements.txt```
 
 As well as the requirements, the [teapot-lidar library](https://github.com/erlenddahl/teapot-lidar) was used. Forked the 19.01.23 with commit: f1e8d6ba6d9a0003ecc4630a878518c3778dabf. This repository is available at: [IsakIngebrigtsen/teapot-lidar](https://github.com/IsakIngebrigtsen/teapot-lidar)
 The teapot-library should be pulled, and the path needs to be added to line 421 in ```absolute_navigatior_ICP.py```.
