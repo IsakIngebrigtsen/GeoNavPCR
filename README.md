@@ -1,11 +1,13 @@
 ![Header](./notes/Before_and_after_PCR.png)
 
-# GeoNavPCR: Improving navigation with LiDAR scanners: A concept study on the use of point cloud registration to enhance and evaluate absolute accuracy
+# GeoNavPCR: Improving Navigation with LiDAR Scanners: A Concept Study on the Use of Point Cloud Registration to Enhance and Evaluate Absolute Accuracy
 
 ## Introduction
 
-This GitHub page is consisting of the code that lays the basis for the master thesis: Improving navigation with LiDAR
-scanners: A concept study on the use of point cloud registration to enhance and evaluate absolute accuracy
+This GitHub page is consisting of the program establishing the basis for the master thesis: Improving Navigation with LiDAR Scanners: A Concept Study on the Use of Point Cloud Registration to Enhance and Evaluate Absolute Accuracy
+
+Written by Isak Foss Ingebrigtsen May 2023
+
 
 Taken from the thesis to establish context for the code:
 
@@ -30,6 +32,7 @@ Furthermore, these are the following research questions used in the thesis:
 
 A more expansive overview of the results presented in this thesis is aviable in the folder ```results```
 
+Since the data from Dovre was made available short time before the deadline, from an unoffial source. Any results from that area is not added to the thesis.
 
 # Running the code
 
@@ -55,8 +58,8 @@ From line 415, to line 436 are inputs that can be changed to gain different resu
     # Path to teapot_lidar project. Code forked with the hash f1e8d6ba6d9a0003ecc4630a878518c3778dabf4, with some minor
     # adjustments. Version used can be pulled from https://github.com/IsakIngebrigtsen/teapot-lidar
     data_path_teapot_lidar = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\teapot_lidar"
-    Area = "Lillehammer"
-    system_folder = "Round1"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
+    Area = "Lillehammer" # Lillehammer, and Dovre are areas that can be tested.
+    system_folder = "Round1"  # Round 1, and Round 2 is for Lillehammer, and Round 3 and Round 4 is for dovre.
     section = "Full"  # Full, Forest, Rural, Dense
     number_of_files = 1
     file_list = get_files(18, number_of_files, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.

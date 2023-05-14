@@ -419,8 +419,8 @@ if __name__ == "__main__":
     # Path to teapot_lidar project. Code forked with the hash f1e8d6ba6d9a0003ecc4630a878518c3778dabf4, with some minor
     # adjustments. Version used can be pulled from https://github.com/IsakIngebrigtsen/teapot-lidar
     data_path_teapot_lidar = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\teapot_lidar"
-    Area = "Lillehammer"
-    system_folder = "Round1"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
+    Area = "Lillehammer" # Lillehammer, and Dovre are areas that can be testet
+    system_folder = "Round1"  # Round 1, and Round 2 is for Lillehammer, and Round 3 and Round 4 is for dovre.
     section = "Full"  # Full, Forest, Rural, Dense
     number_of_files = 1
     file_list = get_files(18, number_of_files, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
@@ -481,8 +481,7 @@ if __name__ == "__main__":
         sbet_PPP = data_path + "Sbet\\Lillehammer_211021_3_7-LC_PPP - SBS-WGS84-UTC-Lidar-10Hz-1.743 0.044 -0.032.out"
         sbet_ETPOS = data_path + "Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
     else:
-        source_pc_numpy = np.load(
-            'C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\pros_data\\dovre_full_source_pc.npy')
+        source_pc_numpy = np.load(data_path+'Referansepunktsky-LAZ\\dovre_full_source_pc.npy')
         # Imports data from TEAPOT project.
         from teapot_lidar.pcapReader import PcapReader
         # Imports the True Trajectory from the SBET file
