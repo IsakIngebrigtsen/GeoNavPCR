@@ -52,6 +52,11 @@ This should be downloaded with the same folder structure for easy running of the
 The script ```absolute_navigatior_ICP.py``` is the main script, and is the basis for all the results in this thesis.
 
 From line 415, to line 436 are inputs that can be changed to gain different results in the program
+
+Line 418 and 421 needs to be changed to have a functional code.
+
+The last folder in line 418 ```data_path``` is the Data folder, this is the folder avialable at [Google drive](https://drive.google.com/drive/folders/1SnkDh-X8KOc1iNNy_-xhMAyngN93VshZ).
+
 ```
     # Inputs for the data!
     voxel_size = 0.5  # means 50cm for this dataset
