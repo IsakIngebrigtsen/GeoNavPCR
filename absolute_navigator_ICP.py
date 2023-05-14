@@ -73,7 +73,6 @@ def transform_pcap(pcap_raw, metadata, sbet_init, frame, init_pos, random_deviat
         random_deviation_n = 0
     center_coord_utm32 = array([e_init + random_deviation_e, n_init + random_deviation_n, h_init])
     pc_transformed_utm = pc_o3d.translate(center_coord_utm32, relative=False)  # open3d
-
     return pc_transformed_utm, center_coord_utm32, initial_origin
 
 
@@ -414,16 +413,20 @@ if __name__ == "__main__":
     start = time.time()
 
     # Inputs for the data!
-    voxel_size = 0.5  # means 5cm for this dataset
+    voxel_size = 0.5  # means 50cm for this dataset
+    # Data path to the data ran in this program. use the structure from
     data_path = 'C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\'
+    # Path to teapot_lidar project. Code forked with the hash f1e8d6ba6d9a0003ecc4630a878518c3778dabf4, with some minor
+    # adjustments. Version used can be pulled from https://github.com/IsakIngebrigtsen/teapot-lidar
+    data_path_teapot_lidar = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\teapot_lidar"
     Area = "Lillehammer"
-    system_folder = "Round2"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
+    system_folder = "Round1"  # ETPOS system folder is the same dataset as the referance point cloud. PPP is a different round.
     section = "Full"  # Full, Forest, Rural, Dense
     number_of_files = 1
-    file_list = get_files(20, number_of_files, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
+    file_list = get_files(18, number_of_files, system_folder)  # the files from the 10th file and 5 files on # Take file nr. 17 next.
     from_frame = 10
-    to_frame = 25
-    skips = 5
+    to_frame = 20
+    skips = 4
     total_number_of_frames = number_of_files*np.round((to_frame-from_frame+1)/skips, 0)
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
@@ -433,8 +436,7 @@ if __name__ == "__main__":
     algorithm = "Point2Plane"
     seed = 1
     import sys
-    # Path to teapot_lidar project. Code forked with the hash f1e8d6ba6d9a0003ecc4630a878518c3778dabf4
-    sys.path.insert(0, "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\master_code\\Master_thesis\\teapot_lidar")
+    sys.path.insert(0, data_path_teapot_lidar)
     # Empty Numpy arrays, that are being filled in the for loops below
     std = []
     std_raw = []
@@ -668,7 +670,7 @@ if __name__ == "__main__":
         source_pointcloud = copy.deepcopy(source_pointcloud).translate(source_pointcloud.get_center()-target_ICP_center, relative=False)
         source_for_plotting = source_pointcloud.voxel_down_sample(voxel_size=0.2)
         draw_registration.draw_absolute_registration_result(source_for_plotting, target_pointcloud,
-                                                            target_pointcloud.get_center()- origo)
+                                                            target_pointcloud.get_center() - origo)
     sbet_full = np.reshape(full_sbet, (-1, 3))
     std = np.reshape(std, (-1, 3))
     std_raw = np.reshape(std_raw, (-1, 3))
@@ -683,10 +685,10 @@ if __name__ == "__main__":
     max_time = timesteps[-1] + 0.5
     # Initialise the sbet reader
     import sys
-    sys.path.insert(0, "C:/Users/isakf/Documents/1_Geomatikk/Master/master_code/teapot_lidar")
+    sys.path.insert(0, data_path_teapot_lidar)
     from teapot_lidar.sbetParser import SbetParser
     # sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Lillehammer_211021_3_7-sbet-200Hz-WGS84.out"
-    true_trajectory_SBET = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
+    true_trajectory_SBET = data_path + "Sbet\\Lillehammer_211021_3_7-TC_PPK - SBS-WGS84-UTC-10Hz-Lidar-1.743 0.044 -0.032.out"
 
     # sbet_ref = "C:\\Users\\isakf\\Documents\\1_Geomatikk\\Master\\Data\\PPP-LAZ\\sbet--UTCtime-Lillehammer_211021_3_7-LC_PPP-PPP-WGS84.out"
 
@@ -842,7 +844,7 @@ if __name__ == "__main__":
         text_file = open('pros\\' + file_name, "w")
         if standalone is True:
             GNSS_system = "Standalone"
-        elif sbet_process == "PPP" and standalone is False :
+        elif sbet_process == "PPP" and standalone is False:
             GNSS_system = "PPP"
         else:
             GNSS_system = "ETPOS"
