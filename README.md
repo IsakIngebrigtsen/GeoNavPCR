@@ -7,7 +7,7 @@
 This GitHub page is consisting of the program establishing the basis for the master thesis: Improving Navigation with LiDAR Scanners: A Concept Study on the Use of Point Cloud Registration to Enhance and Evaluate Absolute Accuracy
 
 
-###Written by Isak Foss Ingebrigtsen May 2023
+**Written by Isak Foss Ingebrigtsen May 2023**
 
 
 Taken from the thesis to establish context for the code:
@@ -41,11 +41,11 @@ Since the data from Dovre was made available short time before the deadline, fro
 
 This code is implemented with python 3.8 and the requierments for the code can be found in the file requirements.txt
 
-As well as the requirements, the teapot-library was used. Forked the 19.01.23 with commit: f1e8d6ba6d9a0003ecc4630a878518c3778dabf, collected from erlenddahl/teapot-lidar. This repository is available at: ```IsakIngebrigtsen/teapot-lidar```
+As well as the requirements, the teapot-library was used. Forked the 19.01.23 with commit: f1e8d6ba6d9a0003ecc4630a878518c3778dabf, collected from [erlenddahl/teapot-lidar](https://github.com/erlenddahl/teapot-lidar). This repository is available at: [IsakIngebrigtsen/teapot-lidar](https://github.com/IsakIngebrigtsen/teapot-lidar)
 The teapot-library should be pulled, and the path needs to be added to line 421 in ```absolute_navigatior_ICP.py```
 
-All data used in this thesis are available at https://drive.google.com/drive/folders/1SnkDh-X8KOc1iNNy_-xhMAyngN93VshZ
-This should be downloaded on the same format for easy running of the code
+All data used in this thesis are available at [Google drive](https://drive.google.com/drive/folders/1SnkDh-X8KOc1iNNy_-xhMAyngN93VshZ)
+This should be downloaded with the same folder structure for easy running of the code
 
 ## Changing the input parameters
 The script ```absolute_navigatior_ICP.py``` is the main script, and is the basis for all the results in this thesis.
