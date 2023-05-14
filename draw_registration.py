@@ -49,7 +49,7 @@ def draw_absolute_registration_result(pc_1,pc_2,target_center):
     # run visualizer main loop
     print("Press Q or Excape to exit")
     vis.poll_events()
-    vis.run()
+    # vis.run()
     vis.capture_screen_image('img_Pointcloud\\RUN_absolute' + time.strftime("%Y-%m-%d %H%M%S") + '.png')
     vis.destroy_window()
 

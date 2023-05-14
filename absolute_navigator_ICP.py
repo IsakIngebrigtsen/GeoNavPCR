@@ -427,14 +427,15 @@ if __name__ == "__main__":
     from_frame = 10
     to_frame = 20
     skips = 4
-    total_number_of_frames = number_of_files*np.round((to_frame-from_frame+1)/skips, 0)
+    handle_outliers = True  # If True, the outliers get removed.
+    algorithm = "Point2Plane"  # It is possible to change between Point-to-Point and Point-To-Plane
     sbet_process = "PPP"  # Choose between SBET_prosess "PPP" or "ETPOS"
     standalone = True  # if True a 1.5 meters deviation is added to the sbet data.
-    save_data = True
-    print_point_cloud = False
-    handle_outliers = True
-    algorithm = "Point2Plane"
+    save_data = True  # True and the data gets saved
+    print_point_cloud = True  # True, and every PCR alignment gets printed as visualisations
+
     seed = 1
+    total_number_of_frames = number_of_files * np.round((to_frame - from_frame + 1) / skips, 0)
     import sys
     sys.path.insert(0, data_path_teapot_lidar)
     # Empty Numpy arrays, that are being filled in the for loops below
